@@ -1,6 +1,11 @@
 package fiuba.fp.validators
 
-import java.util.Locale
+import scala.util.{Failure, Success, Try}
+
+final case class ValidationException(private val message: String = "",
+                                 private val cause: Throwable = None.orNull)
+  extends Exception(message, cause)
+
 
 sealed trait DataValidator
 case object DateValidator extends DataValidator
@@ -10,19 +15,14 @@ case class MaxLengthValidator(maxLength: Int) extends DataValidator
 
 object DataValidator {
   val DATE_PATTERN = "dd/MM/yyyy hh:mm:ss"
-  def validate(validator: DataValidator, data: String): Boolean = validator match {
+  def validate(validator: DataValidator, data: String): Try[Any] = validator match {
     case DateValidator => {
       val fixedData = data.replaceFirst("a\\.m\\.", "m")
       val format = new java.text.SimpleDateFormat(DATE_PATTERN)
-      try {
-        format.parse(fixedData)
-        true
-      } catch {
-        case _: Throwable => false
-      }
+      Try(format.parse(fixedData))
     }
-    case DoubleValidator => data.matches("-?([0-9]+[.])?[0-9]+")
-    case IntValidator => data.matches("-?[0-9]+")
-    case MaxLengthValidator(maxLength) => data.size <= maxLength
+    case DoubleValidator => Try(data.toDouble)
+    case IntValidator => Try(data.toInt)
+    case MaxLengthValidator(maxLength) => if (data.size <= maxLength)  Success(data) else Failure(ValidationException("maxLength failed"))
   }
 }
