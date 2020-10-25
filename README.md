@@ -1,5 +1,7 @@
 # Primera Parte
 
+![Estado de travis](https://travis-ci.org/github/FdelMazo/7527-AlgoritmosIV)
+
 La primera instancia consta de un desarrollo en el lenguaje de programación Scala haciendo uso exclusivamente de herramientas del paradigma funcional y comentando el mismo utilizando el estilo Scaladoc.
 Es decir que el código producido deberá ser Funcional Puro.
 
