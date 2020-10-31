@@ -20,3 +20,4 @@ case class DataSetRow(
                      dollarItau: Double,
                      wDiff: Double
                      )
+
