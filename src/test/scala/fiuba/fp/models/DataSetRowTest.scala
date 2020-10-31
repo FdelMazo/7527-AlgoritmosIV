@@ -15,10 +15,8 @@ class DataSetRowTest extends FpTpSpec {
     }
 
     "The split method" should "return an array of strings splitted by a comma" in {
-
-        val str = "a,b,c"
-
-        split(str) shouldBe Array("a","b","c")
+        val str = "abc,c,d"
+        split(str) shouldBe List("abc","c","d")
     }
 
 }
