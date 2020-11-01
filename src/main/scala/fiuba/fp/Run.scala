@@ -4,7 +4,9 @@ import cats.effect._
 
 object Run extends App {
 
-    val program = IO { println(s"Hello!") }
+    if(args.length < 1) IO.raiseError(new IllegalArgumentException("Falta archivo de entrada"))
+
+    val acquire = IO {scala.io.Source.fromFile(args(0))}
     
-    program.unsafeRunSync() 
+    Resource.fromAutoCloseable(acquire).use(source => IO(println(source.mkString))).unsafeRunSync() 
 }
