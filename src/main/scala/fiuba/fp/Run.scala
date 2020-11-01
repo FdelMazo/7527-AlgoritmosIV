@@ -8,5 +8,11 @@ object Run extends App {
 
     val acquire = IO {scala.io.Source.fromFile(args(0))}
     
-    Resource.fromAutoCloseable(acquire).use(source => IO(println(source.mkString))).unsafeRunSync() 
+    Resource.fromAutoCloseable(acquire).use(
+      source => IO {
+        source.getLines().foreach {
+          line => println (s"New line: ${line}")
+        }
+      }
+    ).unsafeRunSync() 
 }
