@@ -19,7 +19,7 @@ class DataSetRowTest extends FpTpSpec {
         split(str) shouldBe List("abc","c","d")
     }
 
-    "The split method" should "return an empty array when trying to split an empty string" in {
+    "The split method" should "return an array with an empty string when trying to split an empty string" in {
         val str = ""
         split(str) shouldBe List("")
     }
