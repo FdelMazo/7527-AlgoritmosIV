@@ -19,4 +19,29 @@ class DataSetRowTest extends FpTpSpec {
         split(str) shouldBe List("abc","c","d")
     }
 
+    "The split method" should "return an empty array when trying to split an empty string" in {
+        val str = ""
+        split(str) shouldBe List("")
+    }
+
+    "The split method" should "return a list with just the string, if there is no comma" in {
+        val str = "abc"
+        split(str) shouldBe List("abc")
+    }
+
+    "The split method" should "return an empty string and the rest for a string starting with comma" in {
+        val str = ",abc"
+        split(str) shouldBe List("", "abc")
+    }
+
+    "The split method" should "return an string and then an empty string for a string ending with comma" in {
+        val str = "abc,"
+        split(str) shouldBe List("abc", "")
+    }
+
+    "The split method" should "place an empty string where there are two commas together" in {
+        val str = "a,,c"
+        split(str) shouldBe List("a", "", "c")
+    }
+
 }
