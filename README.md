@@ -32,3 +32,10 @@ CREATE TABLE fptp.dataset
 ```
 
 Si un campo nulleable tiene error se guarda como null, sino se descarta la linea.
+
+# Correr tests con podman/docker
+
+Desde el root del repo:
+```bash
+podman-compose -f docker/docker-compose.yaml run algo4tp sbt test
+```
