@@ -22,19 +22,14 @@ object Run extends App {
     s"jdbc:postgresql://$host/fiuba",
     "fiuba", "fiuba")
 
-  List(DataSetRow.drop, DataSetRow.create).foreach { q => q.transact(transactor).unsafeRunSync }
+  List(DataSetRow.drop, DataSetRow.create).foreach { q => q.run.transact(transactor).unsafeRunSync }
 
   val acquire = IO { scala.io.Source.fromFile(args(0)) }
 
   Resource.fromAutoCloseable(acquire).use(
     source => IO {
-      source.getLines().drop(1).foreach {
-        line =>
-          val row : Option[DataSetRow] = DataSetRow.build_row(Utils.split(line));
-          row match {
-            case None => None
-            case Some(i) => DataSetRow.insert_row(i).run.transact(transactor).unsafeRunSync
-          }
-      }
+      source.getLines().drop(1)
+        .flatMap(line => DataSetRow.build_row(Utils.split(line)))
+        .foreach(row => DataSetRow.insert_row(row).run.transact(transactor).unsafeRunSync)
     }).unsafeRunSync
 }

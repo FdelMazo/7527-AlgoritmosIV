@@ -39,7 +39,7 @@ object DataSetRow {
   val drop =
     sql"""
         DROP TABLE IF EXISTS datasetrow
-      """.update.run
+      """.update
 
   val create =
     sql"""
@@ -61,7 +61,7 @@ object DataSetRow {
           dollarItau float,
           wDiff float
         )
-      """.update.run
+      """.update
 
   def insert_row(row : DataSetRow) : Update0 = {
     sql"""insert into datasetrow values (
