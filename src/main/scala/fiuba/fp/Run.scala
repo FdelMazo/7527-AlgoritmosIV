@@ -9,22 +9,10 @@ import cats.effect._
 import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
 import models._
+import fiuba.fp.utils.Utils
 
 object Run extends App {
-
-  def split(str : String) : List[String] = {
-
-    val seed : List[List[Char]] = List(Nil)
-
-    val listOfStrings : List[List[Char]] = str.foldRight[List[List[Char]]](seed)((e, acc) => {
-      if (e == ',') {
-        Nil :: acc
-      } else {
-        (e :: acc.head) :: acc.tail
-      }
-    })
-    listOfStrings.map(substr => substr.foldLeft[String]("")((acc, e) => acc + e))
-  }
+  if(args.length < 1) IO.raiseError(new IllegalArgumentException("Falta archivo de entrada"))
 
   def build_row(row : List[String]) : Option[DataSetRow] = {
 
@@ -106,7 +94,7 @@ object Run extends App {
     source => IO {
       source.getLines().drop(1).foreach {
         line =>
-          val row : Option[DataSetRow] = build_row(split(line));
+          val row : Option[DataSetRow] = build_row(Utils.split(line));
           row match {
             case None => None
             case Some(i) => insert_row(i).run.transact(transactor).unsafeRunSync
