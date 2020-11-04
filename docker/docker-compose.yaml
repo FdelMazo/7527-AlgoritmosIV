@@ -30,3 +30,4 @@ services:
       volumes:
         - ..:/app
       working_dir: /app
+      command: sbt "run train.csv postgres"
