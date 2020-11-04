@@ -61,9 +61,14 @@ object Run extends App {
 
   implicit val cs = IO.contextShift(ExecutionContext.global)
 
+   val host = scala.util.Try(args(1)).toOption match {
+    case Some(h) => h
+    case _ => "localhost"
+  }
+  
   val transactor = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",
-    "jdbc:postgresql://localhost:5432/fiuba",
+    s"jdbc:postgresql://$host/fiuba",
     "fiuba", "fiuba")
 
   val drop =
