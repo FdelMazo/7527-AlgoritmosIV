@@ -1,0 +1,32 @@
+version: '3.7'
+services:
+    postgres:
+        image: postgres:11.9
+        environment:
+          - POSTGRES_USER=fiuba
+          - POSTGRES_PASSWORD=fiuba
+          - POSTGRES_DB=fiuba
+          - PGDATA=/var/lib/postgresql/data/pgdata
+        ports:
+          - 54321:5432
+        volumes:
+          - /var/lib/postgresql/data/pgdata
+        logging:
+            options:
+                max-size: 10m
+                max-file: "3"
+    algo4tp:
+      container_name: algo4tp
+      build:
+        context: ../.
+        dockerfile: docker/tp-Dockerfile
+        args:
+          OPENJDK_TAG: 8u232
+          SBT_VERSION: 1.4.1
+      depends_on:
+        - postgres
+      environment:
+        - DATABASE_URL=postgres://fiuba:fiuba@postgres/fiuba
+      volumes:
+        - ..:/app
+      working_dir: /app

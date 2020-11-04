@@ -1,5 +1,7 @@
 # Primera Parte
 
+[![Build Status](https://travis-ci.org/FdelMazo/7527-AlgoritmosIV.svg?branch=main)](https://travis-ci.org/FdelMazo/7527-AlgoritmosIV)
+
 La primera instancia consta de un desarrollo en el lenguaje de programación Scala haciendo uso exclusivamente de herramientas del paradigma funcional y comentando el mismo utilizando el estilo Scaladoc.
 Es decir que el código producido deberá ser Funcional Puro.
 
@@ -31,7 +33,6 @@ CREATE TABLE fptp.dataset
 
 Si un campo nulleable tiene error se guarda como null, sino se descarta la linea.
 
-
 ## Instalación
 
 Instalar *sbt* (instrucciones [aquí](https://www.scala-sbt.org/1.x/docs/Installing-sbt-on-Linux.html))
@@ -43,3 +44,10 @@ Ejecutar con `sbt run`.
 ### Testing
 
 Ejecutar tests con `sbt test`.
+
+# Correr tests con podman/docker
+
+Desde el root del repo:
+```bash
+podman-compose -f docker/docker-compose.yaml run algo4tp sbt test
+```
