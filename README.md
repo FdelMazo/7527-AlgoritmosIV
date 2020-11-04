@@ -39,7 +39,7 @@ Instalar *sbt* (instrucciones [aquí](https://www.scala-sbt.org/1.x/docs/Install
 
 Compilar con `sbt compile`.
 
-Ejecutar con `sbt run`.
+Ejecutar con `sbt "run train.csv <host>"`.
 
 ### Testing
 
