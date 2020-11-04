@@ -33,9 +33,22 @@ CREATE TABLE fptp.dataset
 
 Si un campo nulleable tiene error se guarda como null, sino se descarta la linea.
 
+## Instalación
+
+Instalar *sbt* (instrucciones [aquí](https://www.scala-sbt.org/1.x/docs/Installing-sbt-on-Linux.html))
+
+Compilar con `sbt compile`.
+
+Ejecutar con `sbt "run train.csv <host>"`.
+
+### Testing
+
+Ejecutar tests con `sbt test`.
+
 # Correr tests con podman/docker
+Usando `docker-compose`/`podman-compose`:
 
 Desde el root del repo:
 ```bash
-podman-compose -f docker/docker-compose.yaml run algo4tp sbt test
+podman-compose -f docker/docker-compose.yaml up --abort-on-container-exit
 ```
