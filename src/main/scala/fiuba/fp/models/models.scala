@@ -41,7 +41,7 @@ object DataSetRow {
       last, close, diff, curr, oVol,
       odiff, opVol, unit, dollarBN, dollarItau,
       wDiff
-      ) if unit.length < 4 => scala.util.Try(DataSetRow(id.toInt,
+      ) if unit.length <= 4 => scala.util.Try(DataSetRow(id.toInt,
         LocalDateTime.parse(date.replace("a.m.", "AM").replace("p.m.", "PM"), formatter),
         scala.util.Try(open.toDouble).toOption,
         scala.util.Try(high.toDouble).toOption,
