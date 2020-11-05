@@ -28,7 +28,8 @@ case class DataSetRow(
                        unit: String,
                        dollarBN: Double,
                        dollarItau: Double,
-                       wDiff: Double
+                       wDiff: Double,
+                       hash: Int
                      )
 
 object DataSetRow {
@@ -40,7 +41,7 @@ object DataSetRow {
       last, close, diff, curr, oVol,
       odiff, opVol, unit, dollarBN, dollarItau,
       wDiff
-      ) => scala.util.Try(DataSetRow(id.toInt,
+      ) if unit.length < 4 => scala.util.Try(DataSetRow(id.toInt,
         LocalDateTime.parse(date.replace("a.m.", "AM").replace("p.m.", "PM"), formatter),
         scala.util.Try(open.toDouble).toOption,
         scala.util.Try(high.toDouble).toOption,
@@ -51,7 +52,7 @@ object DataSetRow {
         scala.util.Try(odiff.toInt).toOption,
         scala.util.Try(opVol.toInt).toOption,
         unit, dollarBN.toDouble,
-        dollarItau.toDouble, wDiff.toDouble)).toOption
+        dollarItau.toDouble, wDiff.toDouble, row.hashCode())).toOption
       case _ => None
     }
   }
@@ -105,6 +106,6 @@ object DataSetRow {
      ?,
      ?,
      ?,
-     0
+     ?
     )""")}
   }
