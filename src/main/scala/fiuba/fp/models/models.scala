@@ -1,11 +1,16 @@
 package fiuba.fp.models
 
+import doobie._
+import doobie.implicits._
+
+import cats.effect._
 import doobie.implicits._
 import doobie.implicits.javatime._
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import doobie.Update0
+import doobie.Update
 
 case class DataSetRow(
                      id: Int,
@@ -63,24 +68,24 @@ object DataSetRow {
         )
       """.update
 
-  def insert_row(row : DataSetRow) : Update0 = {
-    sql"""insert into datasetrow values (
-     ${row.id},
-     ${row.date},
-     ${row.open},
-     ${row.high},
-     ${row.low},
-     ${row.last},
-     ${row.close},
-     ${row.diff},
-     ${row.curr},
-     ${row.OVol},
-     ${row.Odiff},
-     ${row.OpVol},
-     ${row.unit},
-     ${row.dollarBN},
-     ${row.dollarItau},
-     ${row.wDiff}
-      )""".update
+  def insert_rows() : Update[DataSetRow] = {
+    Update[DataSetRow]("""insert into datasetrow values (
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?,
+     ?
+    )""")
   }
 }
