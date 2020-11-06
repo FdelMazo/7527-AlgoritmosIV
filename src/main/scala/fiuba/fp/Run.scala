@@ -6,6 +6,7 @@ import scala.concurrent.ExecutionContext
 import cats.effect._
 import models._
 import fiuba.fp.utils.Utils
+import cats.implicits._
 
 object Run extends App {
   if (args.length < 1) IO.raiseError(new IllegalArgumentException("Falta archivo de entrada"))
@@ -27,9 +28,18 @@ object Run extends App {
   val acquire = IO { scala.io.Source.fromFile(args(0)) }
 
   Resource.fromAutoCloseable(acquire).use(
-    source => IO {
-      source.getLines().drop(1)
-        .flatMap(line => DataSetRow.build_row(Utils.split(line)))
-        .foreach(row => DataSetRow.insert_row(row).run.transact(transactor).unsafeRunSync)
-    }).unsafeRunSync
+    source => source.getLines()
+      .drop(1)
+      .map(Utils.split)
+      .flatMap(DataSetRow.build_row)
+      .map(DataSetRow.insert_rows.run)
+      .toList
+      .grouped(512)
+      .map(gr =>
+        gr.sequence
+          .map(_.sum)
+          .transact(transactor)
+      ).toList
+       .sequence
+  ).unsafeRunSync
 }
