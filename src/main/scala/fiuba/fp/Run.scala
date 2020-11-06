@@ -30,16 +30,17 @@ object Run extends App {
   Resource.fromAutoCloseable(acquire).use(
     source => source.getLines()
       .drop(1)
-      .map(Utils.split)
-      .flatMap(DataSetRow.build_row)
-      .map(DataSetRow.insert_rows.run)
-      .toList
       .grouped(512)
       .map(gr =>
-        gr.sequence
+        gr.map(Utils.split)
+          .flatMap(DataSetRow.build_row)
+          .map(DataSetRow.insert_rows.run)
+          .toList
+          .sequence
           .map(_.sum)
           .transact(transactor)
-      ).toList
-       .sequence
+      )
+      .toList
+      .sequence
   ).unsafeRunSync
 }
