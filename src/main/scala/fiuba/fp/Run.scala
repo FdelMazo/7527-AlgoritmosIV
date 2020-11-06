@@ -33,8 +33,13 @@ object Run extends App {
       .map(Utils.split)
       .flatMap(DataSetRow.build_row)
       .map(DataSetRow.insert_rows.run)
-      .toList.sequence
-      .map(_.sum)
-      .transact(transactor)
+      .toList
+      .grouped(512)
+      .map(gr =>
+        gr.sequence
+          .map(_.sum)
+          .transact(transactor)
+      ).toList
+       .sequence
   ).unsafeRunSync
 }
