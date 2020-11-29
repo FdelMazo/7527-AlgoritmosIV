@@ -2,7 +2,7 @@ name := "fptp"
 
 version := "0.0.1"
 
-scalaVersion := "2.13.3"
+scalaVersion := "2.12.12"
 
 libraryDependencies ++= Seq(
   "org.postgresql" %  "postgresql"    % "42.2.18",

@@ -57,6 +57,13 @@ object DataSetRow {
     }
   }
 
+  def select() : fs2.Stream[doobie.ConnectionIO, DataSetRow] = {
+    sql"""
+    select *, 0 from DataSetRow
+    """.query[DataSetRow]
+      .stream
+      .take (10)
+  }
 
   val drop =
     sql"""
