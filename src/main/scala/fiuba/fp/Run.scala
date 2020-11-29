@@ -7,11 +7,13 @@ import cats.effect._
 import models._
 import cats.implicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SparkSession, DataFrame}
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StructField, StructType,StringType, DateType}
 import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
-import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
-import org.jpmml.PMMLBuilder
+import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler, OneHotEncoder}
+import org.jpmml.sparkml.{PMMLBuilder} // donde esta PMML?
+import org.jpmml.model.metro.MetroJAXBUtil
+import java.io.{FileOutputStream, OutputStream}
 
 object Run extends App {
 /*
@@ -46,58 +48,86 @@ val spark = SparkSession.builder()
     .getOrCreate()
 
 val schema = StructType(
-      StructField("id", IntegerType, nullable=false) ::
-      StructField("date", DateType, nullable=false) ::
-      StructField("open", DoubleType, nullable=true) ::
-      StructField("high", DoubleType, nullable=true) ::
-      StructField("low", DoubleType, nullable=low) ::
+      StructField("Id", IntegerType, nullable=false) ::
+      StructField("date", StringType, nullable=false) :: // si, si, ya se
+      StructField("open", DoubleType, nullable=false) ::
+      StructField("high", DoubleType, nullable=false) ::
+      StructField("low", DoubleType, nullable=false) ::
       StructField("last", DoubleType, nullable=false) ::
       StructField("close", DoubleType, nullable=false) ::
       StructField("diff", DoubleType, nullable=false) ::
       StructField("curr", StringType, nullable=false) ::
-      StructField("OVol", IntegerType, nullable=low) ::
-      StructField("Odiff", IntegerType, nullable=low) ::
-      StructField("OpVol", IntegerType, nullable=low) ::
+      StructField("OVol", IntegerType, nullable=false) ::
+      StructField("Odiff", IntegerType, nullable=false) ::
+      StructField("OpVol", IntegerType, nullable=false) ::
       StructField("unit", StringType, nullable=false) ::
       StructField("dollarBN", DoubleType, nullable=false) ::
       StructField("dollarItau", DoubleType, nullable=false) ::
       StructField("wDiff", DoubleType, nullable=false) ::
-      StructField("hash", IntegerType nullable=false) ::
+      //StructField("hash", IntegerType, nullable=false) ::
       Nil
-  )
+)
 
 val trainDF: DataFrame = spark.read.format("csv")
     .option("header", value = true)
     .option("delimiter", ",")
-    .option("mode", "DROPMALFORMED")
+    //.option("mode", "DROPMALFORMED")
     .schema(schema)
     .load("train.csv")
     .cache()
 
-val categoricals = df.dtypes.filter (_._2 == "StringType") map (_._1)
+trainDF.show(5) // TODO:remove
 
-val indexers = categoricals.map (
-  c => new StringIndexer().setInputCol(c).setOutputCol(s"${c}_idx")
-)
+//System.exit(0)
 
-val encoders = categoricals.map (
-  c => new OneHotEncoder().setInputCol(s"${c}_idx").setOutputCol(s"${c}_enc")
-)
+val indexer = new StringIndexer()
+    .setInputCol("close")
+    .setOutputCol("label")
+    .setHandleInvalid("skip")
+
+val unit_indexer = new StringIndexer().setInputCol("unit").setOutputCol("unit_idx").setHandleInvalid("skip")
+
+val curr_indexer = new StringIndexer().setInputCol("curr").setOutputCol("curr_idx").setHandleInvalid("skip")
+
+
+val cols = Array("Id",
+      "open",
+      "high",
+      "low",
+      "last",
+      "close",
+      "diff",
+      "curr_idx",
+      "OVol",
+      "Odiff",
+      "OpVol",
+      "unit_idx",
+      "dollarBN",
+      "dollarItau",
+      "wDiff",
+      )
+
+val assembler: VectorAssembler = new VectorAssembler()
+    .setInputCols(cols)
+    .setOutputCol("features")
+    .setHandleInvalid("skip")
 
 val randomForestRegressor = new RandomForestRegressor()
     .setSeed(117)
     .setNumTrees(100)
-    .setFeatureSubsetStrategy("auto")
+    .setFeatureSubsetStrategy("auto");
 
+val stages = Array(curr_indexer, unit_indexer, assembler, indexer, randomForestRegressor);
 
-val stages = Array(indexers,encoders,randomForestRegressor)
+val pipeline = new Pipeline().setStages(stages);
 
-val pipeline = new Pipeline().setStages(stages)
+val pipelineModel: PipelineModel = pipeline.fit(trainDF);
 
-val pipelineModel: PipelineModel = pipeline.fit(trainDF)
+val pmml = new PMMLBuilder(schema, pipelineModel).build(); //PMML type
 
-PMML pmml = new PMMLBuilder(schema, pipelineModel).build();
+val os: OutputStream = new FileOutputStream("cosoide.pmml");
+MetroJAXBUtil.marshalPMML(pmml, os);
 
-  val os: OutputStream = new FileOutputStream("cosoide.pmml");
-  MetroJAXBUtil.marshalPMML(pmml, os);
+spark.close()
+
 }
