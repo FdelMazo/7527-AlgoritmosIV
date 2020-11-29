@@ -54,7 +54,7 @@ val schema = StructType(
       StructField("high", DoubleType, nullable=false) ::
       StructField("low", DoubleType, nullable=false) ::
       StructField("last", DoubleType, nullable=false) ::
-      StructField("close", DoubleType, nullable=false) ::
+      StructField("label", DoubleType, nullable=false) :: // cierre
       StructField("diff", DoubleType, nullable=false) ::
       StructField("curr", StringType, nullable=false) ::
       StructField("OVol", IntegerType, nullable=false) ::
@@ -71,31 +71,37 @@ val schema = StructType(
 val trainDF: DataFrame = spark.read.format("csv")
     .option("header", value = true)
     .option("delimiter", ",")
-    //.option("mode", "DROPMALFORMED")
+    .option("mode", "DROPMALFORMED")
     .schema(schema)
-    .load("train.csv")
+    .load("train_small.csv")
     .cache()
 
 trainDF.show(5) // TODO:remove
 
-//System.exit(0)
+// System.exit(0)
 
-val indexer = new StringIndexer()
-    .setInputCol("close")
-    .setOutputCol("label")
-    .setHandleInvalid("skip")
+// val indexer = new StringIndexer()
+//    .setInputCol("close")
+//    .setOutputCol("label")
+//    .setHandleInvalid("keep")
 
-val unit_indexer = new StringIndexer().setInputCol("unit").setOutputCol("unit_idx").setHandleInvalid("skip")
+val unit_indexer = new StringIndexer()
+  .setInputCol("unit")
+  .setOutputCol("unit_idx")
+  .setHandleInvalid("error")
 
-val curr_indexer = new StringIndexer().setInputCol("curr").setOutputCol("curr_idx").setHandleInvalid("skip")
+val curr_indexer = new StringIndexer()
+  .setInputCol("curr")
+  .setOutputCol("curr_idx")
+  .setHandleInvalid("error")
 
 
-val cols = Array("Id",
+val cols = Array(
+      "Id",
       "open",
       "high",
       "low",
       "last",
-      "close",
       "diff",
       "curr_idx",
       "OVol",
@@ -104,20 +110,19 @@ val cols = Array("Id",
       "unit_idx",
       "dollarBN",
       "dollarItau",
-      "wDiff",
-      )
+      "wDiff")
 
 val assembler: VectorAssembler = new VectorAssembler()
     .setInputCols(cols)
     .setOutputCol("features")
-    .setHandleInvalid("skip")
+    .setHandleInvalid("error")
 
 val randomForestRegressor = new RandomForestRegressor()
     .setSeed(117)
     .setNumTrees(100)
     .setFeatureSubsetStrategy("auto");
 
-val stages = Array(curr_indexer, unit_indexer, assembler, indexer, randomForestRegressor);
+val stages = Array(curr_indexer, unit_indexer, assembler, randomForestRegressor);
 
 val pipeline = new Pipeline().setStages(stages);
 
