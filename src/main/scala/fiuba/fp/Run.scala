@@ -2,18 +2,22 @@ package fiuba.fp
 import doobie._
 import doobie.implicits._
 import doobie.util.ExecutionContexts
+
 import scala.concurrent.ExecutionContext
 import cats.effect._
 import models._
 import cats.implicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.{SparkSession, DataFrame}
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StructField, StructType,StringType, DateType}
-import org.apache.spark.ml.regression.{RandomForestRegressionModel, RandomForestRegressor}
-import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler, OneHotEncoder}
-import org.jpmml.sparkml.{PMMLBuilder} // donde esta PMML?
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.ml.regression.{RandomForestRegressor}
+import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
+import org.apache.spark.sql.SQLImplicits
+import org.jpmml.sparkml.PMMLBuilder
 import org.jpmml.model.metro.MetroJAXBUtil
 import java.io.{FileOutputStream, OutputStream}
+
+import org.apache.spark.rdd.RDD
 
 object Run extends App {
 
@@ -36,20 +40,20 @@ object Run extends App {
     s"jdbc:postgresql://$host/fiuba",
     "fiuba", "fiuba")
 
-  def processRow(row: DataSetRow): DataSetRow = {
-    println(row)
-    row
-  }
 
-  val description = DataSetRow.select()
-    .map(processRow)
+  val transaction = DataSetRow.select()
     .compile
     .toList
     .transact(transactor)
 
-  val dataset : List[DataSetRow] = description.unsafeRunSync
+  val analysis = transaction
+    .flatMap(queryResult => IO{
+      val rdd : RDD[DataSetRow] = sparkContext.makeRDD[DataSetRow](queryResult)
+      rdd
+      //val dataFrame : DataFrame = spark.createDataFrame(rdd)
+      //dataFrame
+    })
 
-  val rdd = sparkContext.makeRDD[DataSetRow](dataset)
   val schema = StructType(
       StructField("id", IntegerType, nullable=false) ::
       StructField("date", StringType, nullable=false) :: // si, si, ya se
@@ -71,19 +75,22 @@ object Run extends App {
       Nil
   )
 
+  val rdd = analysis.unsafeRunSync
+
+
   val dataFrame = spark.createDataFrame(rdd)
 
   dataFrame.show(5) // TODO:remove
 
   val unit_indexer = new StringIndexer()
-        .setInputCol("unit")
-        .setOutputCol("unit_idx")
-        .setHandleInvalid("error")
+    .setInputCol("unit")
+    .setOutputCol("unit_idx")
+    .setHandleInvalid("error")
 
   val curr_indexer = new StringIndexer()
-  .setInputCol("curr")
-  .setOutputCol("curr_idx")
-  .setHandleInvalid("error")
+    .setInputCol("curr")
+    .setOutputCol("curr_idx")
+    .setHandleInvalid("error")
 
 
   val cols = Array(
@@ -102,28 +109,27 @@ object Run extends App {
       "dollarItau",
       "wDiff")
 
-val assembler: VectorAssembler = new VectorAssembler()
+  val assembler: VectorAssembler = new VectorAssembler()
     .setInputCols(cols)
     .setOutputCol("features")
     .setHandleInvalid("error")
 
-val randomForestRegressor = new RandomForestRegressor()
-  .setLabelCol("close")
-  .setSeed(117)
-  .setNumTrees(100)
-  .setFeatureSubsetStrategy("auto");
+  val randomForestRegressor = new RandomForestRegressor()
+    .setLabelCol("close")
+    .setSeed(117)
+    .setNumTrees(100)
+    .setFeatureSubsetStrategy("auto");
 
-val stages = Array(curr_indexer, unit_indexer, assembler, randomForestRegressor);
+  val stages = Array(curr_indexer, unit_indexer, assembler, randomForestRegressor);
 
-val pipeline = new Pipeline().setStages(stages);
+  val pipeline = new Pipeline().setStages(stages);
 
-val pipelineModel: PipelineModel = pipeline.fit(dataFrame);
+  val pipelineModel: PipelineModel = pipeline.fit(dataFrame)
 
 /*val pmml = new PMMLBuilder(schema, pipelineModel).build(); //PMML type
 
-val os: OutputStream = new FileOutputStream("cosoide.pmml");
-MetroJAXBUtil.marshalPMML(pmml, os);*/
-
-spark.close()
-
+  val os: OutputStream = new FileOutputStream("cosoide.pmml");
+  MetroJAXBUtil.marshalPMML(pmml, os);
+*/
+  spark.close()
 }
