@@ -16,10 +16,15 @@ import org.jpmml.model.metro.MetroJAXBUtil
 import java.io.{FileOutputStream, OutputStream}
 
 object Run extends App {
-/*
+
   if (args.length < 1) IO.raiseError(new IllegalArgumentException("Falta archivo de entrada"))
 
   implicit val cs = IO.contextShift(ExecutionContext.global)
+
+  val spark = SparkSession.builder()
+        .master("local[*]")
+        .getOrCreate()
+  val sparkContext = spark.sparkContext
 
   val host = scala.util.Try(args(1)).toOption match {
     case Some(h) => h
@@ -31,24 +36,22 @@ object Run extends App {
     s"jdbc:postgresql://$host/fiuba",
     "fiuba", "fiuba")
 
-  def processRow(row: DataSetRow): Unit = {
+  def processRow(row: DataSetRow): DataSetRow = {
     println(row)
+    row
   }
 
   val description = DataSetRow.select()
     .map(processRow)
     .compile
     .toList
-    .transact(transactor)     // IO[List[String]]
-    .unsafeRunSync    // List[String]
-*/
+    .transact(transactor)
 
-val spark = SparkSession.builder()
-    .master("local[*]")
-    .getOrCreate()
+  val dataset : List[DataSetRow] = description.unsafeRunSync
 
-val schema = StructType(
-      StructField("Id", IntegerType, nullable=false) ::
+  val rdd = sparkContext.makeRDD[DataSetRow](dataset)
+  val schema = StructType(
+      StructField("id", IntegerType, nullable=false) ::
       StructField("date", StringType, nullable=false) :: // si, si, ya se
       StructField("open", DoubleType, nullable=false) ::
       StructField("high", DoubleType, nullable=false) ::
@@ -66,38 +69,25 @@ val schema = StructType(
       StructField("wDiff", DoubleType, nullable=false) ::
       //StructField("hash", IntegerType, nullable=false) ::
       Nil
-)
+  )
 
-val trainDF: DataFrame = spark.read.format("csv")
-    .option("header", value = true)
-    .option("delimiter", ",")
-    .option("mode", "DROPMALFORMED")
-    .schema(schema)
-    .load("train_small.csv")
-    .cache()
+  val dataFrame = spark.createDataFrame(rdd)
 
-trainDF.show(5) // TODO:remove
+  dataFrame.show(5) // TODO:remove
 
-// System.exit(0)
+  val unit_indexer = new StringIndexer()
+        .setInputCol("unit")
+        .setOutputCol("unit_idx")
+        .setHandleInvalid("error")
 
-// val indexer = new StringIndexer()
-//    .setInputCol("close")
-//    .setOutputCol("label")
-//    .setHandleInvalid("keep")
-
-val unit_indexer = new StringIndexer()
-  .setInputCol("unit")
-  .setOutputCol("unit_idx")
-  .setHandleInvalid("error")
-
-val curr_indexer = new StringIndexer()
+  val curr_indexer = new StringIndexer()
   .setInputCol("curr")
   .setOutputCol("curr_idx")
   .setHandleInvalid("error")
 
 
-val cols = Array(
-      "Id",
+  val cols = Array(
+      "id",
       "open",
       "high",
       "low",
@@ -118,20 +108,21 @@ val assembler: VectorAssembler = new VectorAssembler()
     .setHandleInvalid("error")
 
 val randomForestRegressor = new RandomForestRegressor()
-    .setSeed(117)
-    .setNumTrees(100)
-    .setFeatureSubsetStrategy("auto");
+  .setLabelCol("close")
+  .setSeed(117)
+  .setNumTrees(100)
+  .setFeatureSubsetStrategy("auto");
 
 val stages = Array(curr_indexer, unit_indexer, assembler, randomForestRegressor);
 
 val pipeline = new Pipeline().setStages(stages);
 
-val pipelineModel: PipelineModel = pipeline.fit(trainDF);
+val pipelineModel: PipelineModel = pipeline.fit(dataFrame);
 
-val pmml = new PMMLBuilder(schema, pipelineModel).build(); //PMML type
+/*val pmml = new PMMLBuilder(schema, pipelineModel).build(); //PMML type
 
 val os: OutputStream = new FileOutputStream("cosoide.pmml");
-MetroJAXBUtil.marshalPMML(pmml, os);
+MetroJAXBUtil.marshalPMML(pmml, os);*/
 
 spark.close()
 
