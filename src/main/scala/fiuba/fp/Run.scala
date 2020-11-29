@@ -9,7 +9,7 @@ import models._
 import cats.implicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType, DateType}
 import org.apache.spark.ml.regression.{RandomForestRegressor}
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
 import org.apache.spark.sql.SQLImplicits
@@ -28,6 +28,9 @@ object Run extends App {
   val spark = SparkSession.builder()
         .master("local[*]")
         .getOrCreate()
+
+  import spark.implicits._
+
   val sparkContext = spark.sparkContext
 
   val host = scala.util.Try(args(1)).toOption match {
@@ -40,28 +43,19 @@ object Run extends App {
     s"jdbc:postgresql://$host/fiuba",
     "fiuba", "fiuba")
 
-
   val transaction = DataSetRow.select()
     .compile
     .toList
     .transact(transactor)
 
-  val analysis = transaction
-    .flatMap(queryResult => IO{
-      val rdd : RDD[DataSetRow] = sparkContext.makeRDD[DataSetRow](queryResult)
-      rdd
-      //val dataFrame : DataFrame = spark.createDataFrame(rdd)
-      //dataFrame
-    })
-
   val schema = StructType(
       StructField("id", IntegerType, nullable=false) ::
-      StructField("date", StringType, nullable=false) :: // si, si, ya se
+      StructField("date", DateType, nullable=false) ::
       StructField("open", DoubleType, nullable=false) ::
       StructField("high", DoubleType, nullable=false) ::
       StructField("low", DoubleType, nullable=false) ::
       StructField("last", DoubleType, nullable=false) ::
-      StructField("label", DoubleType, nullable=false) :: // cierre
+      StructField("close", DoubleType, nullable=false) ::
       StructField("diff", DoubleType, nullable=false) ::
       StructField("curr", StringType, nullable=false) ::
       StructField("OVol", IntegerType, nullable=false) ::
@@ -71,16 +65,13 @@ object Run extends App {
       StructField("dollarBN", DoubleType, nullable=false) ::
       StructField("dollarItau", DoubleType, nullable=false) ::
       StructField("wDiff", DoubleType, nullable=false) ::
-      //StructField("hash", IntegerType, nullable=false) ::
+      StructField("hash", IntegerType, nullable=false) ::
       Nil
   )
 
-  val rdd = analysis.unsafeRunSync
+  val dataFrame = transaction.unsafeRunSync.toDF()
 
-
-  val dataFrame = spark.createDataFrame(rdd)
-
-  dataFrame.show(5) // TODO:remove
+  dataFrame.show(5) // TODO: remove, but useful to see what's going on
 
   val unit_indexer = new StringIndexer()
     .setInputCol("unit")
@@ -91,7 +82,6 @@ object Run extends App {
     .setInputCol("curr")
     .setOutputCol("curr_idx")
     .setHandleInvalid("error")
-
 
   val cols = Array(
       "id",
@@ -114,11 +104,11 @@ object Run extends App {
     .setOutputCol("features")
     .setHandleInvalid("error")
 
-  val randomForestRegressor = new RandomForestRegressor()
-    .setLabelCol("close")
-    .setSeed(117)
-    .setNumTrees(100)
-    .setFeatureSubsetStrategy("auto");
+val randomForestRegressor = new RandomForestRegressor()
+  .setLabelCol("close")
+  .setSeed(117)
+  .setNumTrees(10)
+  .setFeatureSubsetStrategy("auto");
 
   val stages = Array(curr_indexer, unit_indexer, assembler, randomForestRegressor);
 
@@ -126,10 +116,10 @@ object Run extends App {
 
   val pipelineModel: PipelineModel = pipeline.fit(dataFrame)
 
-/*val pmml = new PMMLBuilder(schema, pipelineModel).build(); //PMML type
+  val pmml = new PMMLBuilder(schema, pipelineModel).build(); //PMML type
 
   val os: OutputStream = new FileOutputStream("cosoide.pmml");
   MetroJAXBUtil.marshalPMML(pmml, os);
-*/
+
   spark.close()
 }
