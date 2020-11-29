@@ -6,7 +6,9 @@ import doobie.implicits._
 import cats.effect._
 import doobie.implicits._
 import doobie.implicits.javatime._
+import doobie.implicits.javasql._
 import java.time.LocalDateTime
+import java.sql.Date
 import java.time.format.DateTimeFormatter
 
 import doobie.Update0
@@ -14,7 +16,7 @@ import doobie.Update
 
 case class DataSetRow(
                        id: Int,
-                       date: LocalDateTime,
+                       date: java.sql.Date,
                        open: Option[Double],
                        high: Option[Double],
                        low: Option[Double],
@@ -34,15 +36,13 @@ case class DataSetRow(
 
 object DataSetRow {
   def build_row(row: List[String]): Option[DataSetRow] = {
-    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a");
-
     row match {
       case List(id, date, open, high, low,
       last, close, diff, curr, oVol,
       odiff, opVol, unit, dollarBN, dollarItau,
       wDiff
       ) if unit.length <= 4 => scala.util.Try(DataSetRow(id.toInt,
-        LocalDateTime.parse(date.replace("a.m.", "AM").replace("p.m.", "PM"), formatter),
+        java.sql.Date.valueOf(date.replace("a.m.", "AM").replace("p.m.", "PM")),
         scala.util.Try(open.toDouble).toOption,
         scala.util.Try(high.toDouble).toOption,
         scala.util.Try(low.toDouble).toOption,
