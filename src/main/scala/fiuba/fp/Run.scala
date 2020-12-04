@@ -79,7 +79,6 @@ object Run extends App {
     a <- s1 zip transaction.unsafeRunSync
     if a._2.productIterator.exists(_ == None) == false
     } yield {
-        println(a._2)
         a match {
             case (a, b) if a <= 0.3 => (Some(b), None)
             case (a, b) => (None, Some(b))
