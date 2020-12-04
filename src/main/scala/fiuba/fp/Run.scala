@@ -75,21 +75,18 @@ object Run extends App {
 
   val s1 = LCG.randStream(lcg0)
 
-  val z = for {
+  val dataTagged  = for {
     a <- s1 zip transaction.unsafeRunSync
     if a._2.productIterator.exists(_ == None) == false
     } yield {
-        a match {
-            case (a, b) if a <= 0.3 => (Some(b), None)
-            case (a, b) => (None, Some(b))
-        }
+        println(a._2)
+        (a._2, a._1 <= 0.3)
     }
 
-  val (test, train) = z.foldLeft(List[(Option[DataSetRow], Option[DataSetRow])]())((acc, newval) => {newval::acc}).unzip
-
-  // esto es feo, habria que repensar esta parte
-  val trainDF = train.flatten.toDF
-  val testDF = test.flatten.toDF
+  val dataMap : Map[Boolean, Stream[(DataSetRow, Boolean)]] = dataTagged.groupBy(item => item._2)
+  val (testStream, trainStream) = (dataMap.get(true), dataMap.get(false))
+  val testDF = testStream.map(s => s.map(t => t._1)).get.toDF
+  val trainDF = trainStream.map(s => s.map(t => t._1)).get.toDF
 
   val unit_indexer = new StringIndexer()
     .setInputCol("unit")
