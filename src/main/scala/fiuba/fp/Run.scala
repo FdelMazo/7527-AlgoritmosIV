@@ -85,12 +85,8 @@ object Run extends App {
 
   val dataMap : Map[Boolean, Stream[(DataSetRow, Boolean)]] = dataTagged.groupBy(item => item._2)
   val (testStream, trainStream) = (dataMap.get(true), dataMap.get(false))
-  val test = testStream.map(s => s.map(t => t._1)).get
-  val train = trainStream.map(s => s.map(t => t._1)).get
-
-  // esto es feo, habria que repensar esta parte
-  val trainDF = train.toDF
-  val testDF = test.toDF
+  val testDF = testStream.map(s => s.map(t => t._1)).get.toDF
+  val trainDF = trainStream.map(s => s.map(t => t._1)).get.toDF
 
   val unit_indexer = new StringIndexer()
     .setInputCol("unit")
