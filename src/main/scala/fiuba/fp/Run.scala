@@ -12,6 +12,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType, DateType}
 import org.apache.spark.ml.regression.{RandomForestRegressor}
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
+import org.apache.spark.ml.evaluation.{RegressionEvaluator}
 import org.apache.spark.sql.SQLImplicits
 import org.jpmml.sparkml.PMMLBuilder
 import org.jpmml.model.metro.MetroJAXBUtil
@@ -69,9 +70,53 @@ object Run extends App {
       Nil
   )
 
-  val dataFrame = transaction.unsafeRunSync.toDF()
+  import scala.math._
 
-  dataFrame.show(5) // TODO: remove, but useful to see what's going on
+  trait RNG {
+    def nextProb: (Double, RNG)
+  }
+
+case class LCG(
+  seed: Long,
+  multiplier: Long = 1103515245,
+  increment: Long= 12345,
+  modulo: Long = pow(2, 31).toInt
+) extends RNG {
+    def nextProb: (Double, RNG) = {
+        val newSeed = (seed * multiplier + increment) % modulo
+        val nextLCG = LCG(newSeed, multiplier, increment, modulo)
+        val n = newSeed.toFloat / modulo
+        (n, nextLCG)
+    }
+}
+
+object LCG {
+  def randStream(r: RNG): Stream[Double] = r.nextProb match {
+    case (prob, next) => prob #:: randStream(next)
+  }
+}
+  val lcg0 = LCG(117)
+
+  val s1 = LCG.randStream(lcg0)
+
+  val z = for {
+    a <- s1 zip transaction.unsafeRunSync
+    if a._2.productIterator.exists(_ == None) == false
+    } yield {
+        println(a._2)
+        a match {
+            case (a, b) if a <= 0.3 => (Some(b), None)
+            case (a, b) => (None, Some(b))
+        }
+    }
+
+  val (test, train) = z.foldLeft(List[(Option[DataSetRow], Option[DataSetRow])]())((acc, newval) => {newval::acc}).unzip
+
+  // esto es feo, habria que repensar esta parte
+  val trainDF = train.flatten.toDF
+  val testDF = test.flatten.toDF
+
+  trainDF.show() // TODO: remove, but useful to see what's going on
 
   val unit_indexer = new StringIndexer()
     .setInputCol("unit")
@@ -114,7 +159,17 @@ val randomForestRegressor = new RandomForestRegressor()
 
   val pipeline = new Pipeline().setStages(stages);
 
-  val pipelineModel: PipelineModel = pipeline.fit(dataFrame)
+  val pipelineModel: PipelineModel = pipeline.fit(trainDF)
+
+  val pred = pipelineModel.transform(testDF)
+  
+  val evaluator = new RegressionEvaluator()
+    .setLabelCol("close")
+    .setPredictionCol("prediction")
+    .setMetricName("mae")
+
+  val mae = evaluator.evaluate(pred)
+  println(s"test MAE: $mae")
 
   val pmml = new PMMLBuilder(schema, pipelineModel).build(); //PMML type
 
