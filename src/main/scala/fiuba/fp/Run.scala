@@ -9,15 +9,16 @@ import models._
 import cats.implicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType, DateType}
-import org.apache.spark.ml.regression.{RandomForestRegressor}
+import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.ml.regression.RandomForestRegressor
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
-import org.apache.spark.ml.evaluation.{RegressionEvaluator}
+import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.sql.SQLImplicits
 import org.jpmml.sparkml.PMMLBuilder
 import org.jpmml.model.metro.MetroJAXBUtil
 import java.io.{FileOutputStream, OutputStream}
 
+import fiuba.fp.rand.LCG
 import org.apache.spark.rdd.RDD
 
 object Run extends App {
@@ -70,31 +71,6 @@ object Run extends App {
       Nil
   )
 
-  import scala.math._
-
-  trait RNG {
-    def nextProb: (Double, RNG)
-  }
-
-case class LCG(
-  seed: Long,
-  multiplier: Long = 1103515245,
-  increment: Long= 12345,
-  modulo: Long = pow(2, 31).toInt
-) extends RNG {
-    def nextProb: (Double, RNG) = {
-        val newSeed = (seed * multiplier + increment) % modulo
-        val nextLCG = LCG(newSeed, multiplier, increment, modulo)
-        val n = newSeed.toFloat / modulo
-        (n, nextLCG)
-    }
-}
-
-object LCG {
-  def randStream(r: RNG): Stream[Double] = r.nextProb match {
-    case (prob, next) => prob #:: randStream(next)
-  }
-}
   val lcg0 = LCG(117)
 
   val s1 = LCG.randStream(lcg0)
