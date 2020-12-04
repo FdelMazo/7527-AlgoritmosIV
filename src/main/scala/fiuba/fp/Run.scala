@@ -92,8 +92,6 @@ object Run extends App {
   val trainDF = train.toDF
   val testDF = test.toDF
 
-  trainDF.show() // TODO: remove, but useful to see what's going on
-
   val unit_indexer = new StringIndexer()
     .setInputCol("unit")
     .setOutputCol("unit_idx")
