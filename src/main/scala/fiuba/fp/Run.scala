@@ -9,14 +9,16 @@ import models._
 import cats.implicits._
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.types.{DoubleType, IntegerType, StringType, StructField, StructType, DateType}
-import org.apache.spark.ml.regression.{RandomForestRegressor}
+import org.apache.spark.sql.types.{DateType, DoubleType, IntegerType, StringType, StructField, StructType}
+import org.apache.spark.ml.regression.RandomForestRegressor
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
+import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.sql.SQLImplicits
 import org.jpmml.sparkml.PMMLBuilder
 import org.jpmml.model.metro.MetroJAXBUtil
 import java.io.{FileOutputStream, OutputStream}
 
+import fiuba.fp.rand.LCG
 import org.apache.spark.rdd.RDD
 
 object Run extends App {
@@ -69,9 +71,26 @@ object Run extends App {
       Nil
   )
 
-  val dataFrame = transaction.unsafeRunSync.toDF()
+  val lcg0 = LCG(117)
 
-  dataFrame.show(5) // TODO: remove, but useful to see what's going on
+  val s1 = LCG.randStream(lcg0)
+
+  val z = for {
+    a <- s1 zip transaction.unsafeRunSync
+    if a._2.productIterator.exists(_ == None) == false
+    } yield {
+        println(a._2)
+        a match {
+            case (a, b) if a <= 0.3 => (Some(b), None)
+            case (a, b) => (None, Some(b))
+        }
+    }
+
+  val (test, train) = z.foldLeft(List[(Option[DataSetRow], Option[DataSetRow])]())((acc, newval) => {newval::acc}).unzip
+
+  // esto es feo, habria que repensar esta parte
+  val trainDF = train.flatten.toDF
+  val testDF = test.flatten.toDF
 
   val unit_indexer = new StringIndexer()
     .setInputCol("unit")
@@ -114,7 +133,17 @@ val randomForestRegressor = new RandomForestRegressor()
 
   val pipeline = new Pipeline().setStages(stages);
 
-  val pipelineModel: PipelineModel = pipeline.fit(dataFrame)
+  val pipelineModel: PipelineModel = pipeline.fit(trainDF)
+
+  val pred = pipelineModel.transform(testDF)
+  
+  val evaluator = new RegressionEvaluator()
+    .setLabelCol("close")
+    .setPredictionCol("prediction")
+    .setMetricName("mae")
+
+  val mae = evaluator.evaluate(pred)
+  println(s"test MAE: $mae")
 
   val pmml = new PMMLBuilder(schema, pipelineModel).build(); //PMML type
 

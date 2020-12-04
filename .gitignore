@@ -11,4 +11,5 @@ project/metals.sbt
 .vscode/
 .bloop/
 .bsp/
-*.swp
+**.sw{o,p}
+**.pmml
