@@ -21,7 +21,7 @@ import java.io.{ FileOutputStream, OutputStream }
 import fiuba.fp.rand.LCG
 import org.apache.spark.rdd.RDD
 
-object Run extends App {
+object Main extends App {
 
   if (args.length < 1) IO.raiseError(new IllegalArgumentException("Falta archivo de entrada"))
 
