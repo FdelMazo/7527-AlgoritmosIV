@@ -1,7 +1,7 @@
 package fiuba.fp.http
 
 import cats.effect.{ConcurrentEffect, Timer}
-import fiuba.fp.services.HealthCheckImpl
+import fiuba.fp.services.{HealthCheckImpl, ScoreServiceImpl}
 import fs2.Stream
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -14,7 +14,8 @@ object Fpfiuba43Server {
   def stream[F[_]: ConcurrentEffect](implicit T: Timer[F]): Stream[F, Nothing] = {
 
     val healthCheck = new HealthCheckImpl[F]("changeme")
-    val httpApp = Fpfiuba43Routes.healthCheckRoutes[F](healthCheck).orNotFound
+    val scoreService = new ScoreServiceImpl[F]()
+    val httpApp = Fpfiuba43Routes.routes[F](healthCheck, scoreService).orNotFound
     val finalHttpApp = Logger.httpApp(true, true)(httpApp)
 
     for {

@@ -2,7 +2,10 @@ package fiuba.fp.models
 
 import java.time.LocalDateTime
 
-case class InputRow(id: Int,
+import io.circe.Decoder
+import io.circe.generic.semiauto.deriveDecoder
+
+final case class InputRow(id: Int,
                     date: LocalDateTime,
                     open: Option[Double],
                     high: Option[Double],
@@ -18,3 +21,7 @@ case class InputRow(id: Int,
                     dollarBN: Double,
                     dollarItau: Double,
                     wDiff: Double)
+
+object InputRow {
+  implicit val decoder: Decoder[InputRow] = deriveDecoder
+}

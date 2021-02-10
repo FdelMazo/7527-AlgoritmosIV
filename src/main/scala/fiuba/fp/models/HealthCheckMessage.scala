@@ -1,7 +1,7 @@
 package fiuba.fp.models
 
-import io.circe._
-import io.circe.generic.semiauto._
+import io.circe.Encoder
+import io.circe.generic.semiauto.deriveEncoder
 
 final case class HealthCheckMessage(version: String, maintainer: String)
 
