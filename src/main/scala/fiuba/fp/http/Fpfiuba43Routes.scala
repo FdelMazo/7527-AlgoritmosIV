@@ -41,8 +41,8 @@ object Fpfiuba43Routes {
         println(req.as[InputRow])
         for{
           data <- req.as[InputRow]
-          score <- scoreService.score
-          resp <- Ok(data.toString)
+          score <- scoreService.score(data)
+          resp <- Ok(score.asJson)
         } yield resp
     }
   }
