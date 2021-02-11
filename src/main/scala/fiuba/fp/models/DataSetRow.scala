@@ -37,7 +37,7 @@ case class DataSetRow(
 object DataSetRow {
   def select() : fs2.Stream[doobie.ConnectionIO, DataSetRow] = {
     sql"""
-    select *, 0 from DataSetRow
+    select *, 0 from fptp.dataset
     """.query[DataSetRow]
       .stream
       //.take (100)
