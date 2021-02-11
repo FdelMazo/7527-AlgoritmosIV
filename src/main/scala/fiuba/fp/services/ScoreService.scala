@@ -58,7 +58,7 @@ class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
       case _ => PMMLevaluate(data)
     }
 
-    ScoreMessage("La la la").pure[F]
+    ScoreMessage(score.toString).pure[F]
   }
 
 }
