@@ -18,11 +18,23 @@ trait ScoreService[F[_]] {
 
 class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
     def PMMLevaluate(data: InputRow): String = {
-      val evaluator = new LoadingModelEvaluatorBuilder().load(new File("cosoide.pmml")).build();
+      val evaluator = new LoadingModelEvaluatorBuilder().load(new File("/home/nox/repos/fiuba/7527-algoritmos-4/7527-AlgoritmosIV/cosoide.pmml")).build();
 
       evaluator.verify();
 
-      val dataMap : Map[String, Any] = (data.productElementNames zip data.productIterator).toMap
+      //val dataMap : Map[String, Any] = (data.productElementNames zip data.productIterator).toMap
+
+      val dataMap : Map[String, Any] = Map(
+        "id" -> 158,
+        "date" -> "2020-12-02T14:49:15.841609",
+        "last" -> 0.0,
+        "diff" -> 0.0,
+        "curr"-> "D",
+        "unit" -> "TONS",
+        "dollarBN"-> 2.919,
+        "dollarItau"-> 2.91,
+        "wDiff"-> -148.0
+      )
 
       val arguments : Map[FieldName, FieldValue] = (for {
         inputField <- evaluator.getInputFields.asScala.toList
@@ -33,8 +45,8 @@ class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
       )).toMap
 
       val results = evaluator.evaluate(arguments.asJava)
-    
-      "0.7"
+      return results.toString
+
     }
 
   override def score(data: InputRow): F[ScoreMessage] = {
