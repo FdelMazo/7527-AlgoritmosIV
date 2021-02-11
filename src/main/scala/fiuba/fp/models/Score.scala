@@ -9,7 +9,7 @@ case class Score(
 object Score {
   def selectByHash(hash: Int) : fs2.Stream[doobie.ConnectionIO, Score] = {
     sql"""
-    select * from Score where hash_code = $hash
+    select * from fptp.scores where hash_code = $hash
     """.query[Score]
       .stream
   }

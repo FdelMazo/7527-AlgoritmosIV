@@ -46,7 +46,7 @@ object DataSetRow {
 
   def selectById(id: Int) : fs2.Stream[doobie.ConnectionIO, DataSetRow] = {
     sql"""
-    select * from DataSetRow where id = $id
+    select * from fptp.dataset where id = $id
     """.query[DataSetRow]
       .stream
   }
