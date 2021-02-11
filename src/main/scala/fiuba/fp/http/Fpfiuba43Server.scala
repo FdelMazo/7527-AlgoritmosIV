@@ -13,7 +13,7 @@ object Fpfiuba43Server {
 
   def stream[F[_]: ConcurrentEffect](implicit T: Timer[F]): Stream[F, Nothing] = {
 
-    val healthCheck = new HealthCheckImpl[F]("changeme")
+    val healthCheck = new HealthCheckImpl[F]("entergroupname")
     val scoreService = new ScoreServiceImpl[F]()
     val httpApp = Fpfiuba43Routes.routes[F](healthCheck, scoreService).orNotFound
     val finalHttpApp = Logger.httpApp(true, true)(httpApp)
