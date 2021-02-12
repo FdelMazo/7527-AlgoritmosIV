@@ -1,6 +1,7 @@
 package fiuba.fp.http
 
-import cats.effect.{ConcurrentEffect, Timer}
+import cats.effect.{ContextShift, Timer, ConcurrentEffect}
+import cats.effect.IO.{contextShift, ContextSwitch}
 import fiuba.fp.services.{HealthCheckImpl, ScoreServiceImpl}
 import fs2.Stream
 import org.http4s.implicits._
@@ -11,7 +12,7 @@ import scala.concurrent.ExecutionContext.global
 
 object Fpfiuba43Server {
 
-  def stream[F[_]: ConcurrentEffect](implicit T: Timer[F]): Stream[F, Nothing] = {
+  def stream[F[_]: ConcurrentEffect](implicit T: Timer[F], contextShift: ContextShift[F]): Stream[F, Nothing] = {
 
     val healthCheck = new HealthCheckImpl[F]("entergroupname")
     val scoreService = new ScoreServiceImpl[F]()

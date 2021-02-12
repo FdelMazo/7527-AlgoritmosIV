@@ -12,12 +12,18 @@ import org.jpmml.evaluator.{FieldValue,EvaluatorUtil,LoadingModelEvaluatorBuilde
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 import org.jpmml.evaluator.InputField
+import cats.effect._
+import cats.implicits._
+import doobie.ExecutionContexts
+import doobie.hikari._
+import doobie.implicits._
+import fiuba.fp.models.{Score, ScoreMessage, InputRow}
 
 trait ScoreService[F[_]] {
   def score(data: InputRow): F[ScoreMessage]
 }
 
-class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
+class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) extends ScoreService[F] {
     def PMMLevaluate(data: InputRow): String = {
       val evaluator = new LoadingModelEvaluatorBuilder().load(new File("cosoide.pmml")).build();
 
@@ -64,27 +70,40 @@ class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
     }
 
   override def score(data: InputRow): F[ScoreMessage] = {
-    implicit val cs = IO.contextShift(ExecutionContext.global)
 
-    val transactor = Transactor.fromDriverManager[IO](
-      "org.postgresql.Driver",
-      s"jdbc:postgresql://localhost/fiuba",
-      "fiuba", "fiuba"
-    )
+    val transactor: Resource[F, HikariTransactor[F]] =
+      for {
+        ce <- ExecutionContexts.fixedThreadPool[F](32) // our connect EC
+        be <- Blocker[F]    // our blocking EC
+        xa <- HikariTransactor.newHikariTransactor[F](
+          "org.postgresql.Driver",                        // driver classname
+          "jdbc:postgresql://localhost/fiuba",   // connect URL
+          "fiuba",                                   // username
+          "fiuba",                                     // password
+          ce,                                     // await connection here
+          be                                      // execute JDBC operations here
+        )
+      } yield xa
 
-    val scorerow: Option[Score] = Score.selectByHash(data.hashCode)
-      .compile
-      .toList
-      .transact(transactor)
-      .unsafeRunSync
-      .headOption
-
-    val score = scorerow match {
-      case Some(h) => h.score
-      case _ => PMMLevaluate(data)
+    transactor.use { xa =>
+      for {
+          scoreRow <- sql"""select * from fptp.scores where hash_code = ${data.hash}""".query[Score].option.transact(xa)
+          score <- scoreRow match {
+            case Some(x) => x.score.get.pure[F]
+            case _ => sql"""insert into fptp.scores values (${data.hash}, ${data.score})""".update.run.transact(xa).map(_ => data.score)
+          }
+      } yield ScoreMessage(score.toString())
     }
-
-    ScoreMessage(score.toString).pure[F]
   }
-
 }
+
+
+
+
+
+
+
+
+
+
+

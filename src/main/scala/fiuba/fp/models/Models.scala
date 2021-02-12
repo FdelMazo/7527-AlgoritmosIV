@@ -20,7 +20,11 @@ final case class InputRow(id: Int,
                     unit: String,
                     dollarBN: Double,
                     dollarItau: Double,
-                    wDiff: Double)
+                    wDiff: Double) {
+
+  def hash() = this.hashCode()
+  def score() = 95
+}
 
 object InputRow {
   implicit val decoder: Decoder[InputRow] = deriveDecoder
