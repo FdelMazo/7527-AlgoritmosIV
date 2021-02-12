@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<PMML xmlns="http://www.dmg.org/PMML-4_4" xmlns:data="http://jpmml.org/jpmml-model/InlineTable" version="4.3">
+	<Header>
+		<Application name="JPMML-SparkML" version="1.6.1"/>
+		<Timestamp>2021-02-12T15:44:23Z</Timestamp>
+	</Header>
+	<DataDictionary>
+		<DataField name="id" optype="continuous" dataType="integer"/>
+		<DataField name="diff" optype="continuous" dataType="double"/>
+		<DataField name="dollarBN" optype="continuous" dataType="double"/>
+		<DataField name="dollarItau" optype="continuous" dataType="double"/>
+		<DataField name="wDiff" optype="continuous" dataType="double"/>
+		<DataField name="close" optype="continuous" dataType="double"/>
+	</DataDictionary>
+	<TransformationDictionary/>
+	<MiningModel functionName="regression">
+		<MiningSchema>
+			<MiningField name="close" usageType="target"/>
+			<MiningField name="id"/>
+			<MiningField name="diff"/>
+			<MiningField name="dollarBN"/>
+			<MiningField name="dollarItau"/>
+			<MiningField name="wDiff"/>
+		</MiningSchema>
+		<Output>
+			<OutputField name="prediction" optype="continuous" dataType="double"/>
+		</Output>
+		<Segmentation multipleModelMethod="average">
+			<Segment id="1">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="id"/>
+						<MiningField name="diff"/>
+						<MiningField name="dollarItau"/>
+					</MiningSchema>
+					<Node score="221.0">
+						<True/>
+						<Node score="227.0">
+							<SimplePredicate field="dollarItau" operator="lessOrEqual" value="2.8819999999999997"/>
+							<Node score="226.0">
+								<SimplePredicate field="dollarItau" operator="lessOrEqual" value="2.8765"/>
+							</Node>
+							<Node score="228.0">
+								<SimplePredicate field="id" operator="lessOrEqual" value="8.0"/>
+							</Node>
+						</Node>
+						<Node score="220.0">
+							<SimplePredicate field="diff" operator="lessOrEqual" value="0.5"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="2">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema/>
+					<Node score="223.0">
+						<True/>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="3">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="id"/>
+						<MiningField name="diff"/>
+						<MiningField name="wDiff"/>
+					</MiningSchema>
+					<Node score="220.0">
+						<True/>
+						<Node score="225.0">
+							<SimplePredicate field="wDiff" operator="lessOrEqual" value="-223.0"/>
+							<Node score="226.0">
+								<SimplePredicate field="diff" operator="lessOrEqual" value="4.0"/>
+								<Node score="228.0">
+									<SimplePredicate field="id" operator="lessOrEqual" value="8.0"/>
+								</Node>
+								<Node score="227.0">
+									<SimplePredicate field="id" operator="lessOrEqual" value="83.0"/>
+								</Node>
+							</Node>
+						</Node>
+						<Node score="221.0">
+							<SimplePredicate field="id" operator="lessOrEqual" value="3.0"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="4">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="dollarBN"/>
+						<MiningField name="wDiff"/>
+					</MiningSchema>
+					<Node score="221.0">
+						<True/>
+						<Node score="227.0">
+							<SimplePredicate field="dollarBN" operator="lessOrEqual" value="2.8775"/>
+							<Node score="228.0">
+								<SimplePredicate field="dollarBN" operator="lessOrEqual" value="2.87"/>
+							</Node>
+						</Node>
+						<Node score="225.0">
+							<SimplePredicate field="wDiff" operator="lessOrEqual" value="-223.0"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="5">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="id"/>
+					</MiningSchema>
+					<Node score="226.0">
+						<True/>
+						<Node score="220.5">
+							<SimplePredicate field="id" operator="lessOrEqual" value="5.0"/>
+						</Node>
+						<Node score="228.0">
+							<SimplePredicate field="id" operator="lessOrEqual" value="7.0"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="6">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="id"/>
+						<MiningField name="diff"/>
+						<MiningField name="dollarBN"/>
+						<MiningField name="wDiff"/>
+					</MiningSchema>
+					<Node score="226.0">
+						<True/>
+						<Node score="221.0">
+							<SimplePredicate field="id" operator="lessOrEqual" value="5.0"/>
+							<Node score="220.0">
+								<SimplePredicate field="diff" operator="lessOrEqual" value="2.0"/>
+								<Node score="221.0">
+									<SimplePredicate field="dollarBN" operator="lessOrEqual" value="2.8834999999999997"/>
+								</Node>
+							</Node>
+						</Node>
+						<Node score="227.0">
+							<SimplePredicate field="wDiff" operator="lessOrEqual" value="-226.5"/>
+							<Node score="228.0">
+								<SimplePredicate field="dollarBN" operator="lessOrEqual" value="2.87"/>
+							</Node>
+						</Node>
+						<Node score="225.0">
+							<SimplePredicate field="id" operator="lessOrEqual" value="6.0"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="7">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="dollarBN"/>
+						<MiningField name="dollarItau"/>
+						<MiningField name="wDiff"/>
+					</MiningSchema>
+					<Node score="221.0">
+						<True/>
+						<Node score="227.0">
+							<SimplePredicate field="wDiff" operator="lessOrEqual" value="-225.5"/>
+							<Node score="228.0">
+								<SimplePredicate field="dollarItau" operator="lessOrEqual" value="2.8689999999999998"/>
+							</Node>
+							<Node score="226.0">
+								<SimplePredicate field="dollarItau" operator="lessOrEqual" value="2.8765"/>
+							</Node>
+						</Node>
+						<Node score="220.0">
+							<SimplePredicate field="dollarBN" operator="lessOrEqual" value="2.9059999999999997"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="8">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="id"/>
+					</MiningSchema>
+					<Node score="227.0">
+						<True/>
+						<Node score="221.0">
+							<SimplePredicate field="id" operator="lessOrEqual" value="1.0"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="9">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="diff"/>
+						<MiningField name="dollarBN"/>
+						<MiningField name="dollarItau"/>
+						<MiningField name="wDiff"/>
+					</MiningSchema>
+					<Node score="221.0">
+						<True/>
+						<Node score="225.0">
+							<SimplePredicate field="wDiff" operator="lessOrEqual" value="-223.0"/>
+							<Node score="227.0">
+								<SimplePredicate field="diff" operator="lessOrEqual" value="-0.5"/>
+								<Node score="226.0">
+									<SimplePredicate field="dollarBN" operator="lessOrEqual" value="2.87"/>
+								</Node>
+							</Node>
+						</Node>
+						<Node score="221.0">
+							<SimplePredicate field="dollarItau" operator="lessOrEqual" value="2.8725"/>
+						</Node>
+						<Node score="220.0">
+							<SimplePredicate field="diff" operator="lessOrEqual" value="2.0"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+			<Segment id="10">
+				<True/>
+				<TreeModel functionName="regression" missingValueStrategy="nullPrediction" noTrueChildStrategy="returnLastPrediction">
+					<MiningSchema>
+						<MiningField name="id"/>
+						<MiningField name="diff"/>
+						<MiningField name="wDiff"/>
+					</MiningSchema>
+					<Node score="220.0">
+						<True/>
+						<Node score="225.0">
+							<SimplePredicate field="wDiff" operator="lessOrEqual" value="-223.0"/>
+							<Node score="228.0">
+								<SimplePredicate field="diff" operator="lessOrEqual" value="4.0"/>
+							</Node>
+						</Node>
+						<Node score="221.0">
+							<SimplePredicate field="id" operator="lessOrEqual" value="3.0"/>
+						</Node>
+					</Node>
+				</TreeModel>
+			</Segment>
+		</Segmentation>
+	</MiningModel>
+</PMML>
