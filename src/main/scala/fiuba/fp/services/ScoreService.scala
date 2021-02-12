@@ -35,7 +35,12 @@ class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
         "unit"-> "TONS",
         "dollarBN"-> 2.919,
         "dollarItau"-> 2.91,
-        "wDiff"-> -148.0
+        "wDiff"-> -148.0,
+        "OpVol" -> 12,
+        "Odiff" -> 17,
+        "Ovol" -> 12,
+        "high" -> 123.3,
+        "open" -> 123.2,
       )
 
       val input_fields: List[InputField] = evaluator.getInputFields.asScala.toList
