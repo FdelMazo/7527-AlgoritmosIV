@@ -23,20 +23,9 @@ class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
 
       evaluator.verify();
 
-      //val dataMap : Map[String, Any] = (data.productElementNames zip data.productIterator).toMap
-
-      val dataMap : Map[String, Any] = Map(
-        "id"-> 158,
-        "date"-> "2020-12-02T14->49->15.841609",
-        "last"-> 0.0,
-        "close"-> 148.0,
-        "diff"-> 0.0,
-        "curr"-> "D",
-        "unit"-> "TONS",
-        "dollarBN"-> 2.919,
-        "dollarItau"-> 2.91,
-        "wDiff"-> -148.0
-      )
+      val dataMap : Map[String, Any] = (data.productElementNames zip data.productIterator)
+        .filter(_._2 != None)
+        .toMap
 
       val input_fields: List[InputField] = evaluator.getInputFields.asScala.toList
       val input_fields_namevals: List[String] = input_fields.map(_.getName).map(_.getValue)
@@ -74,7 +63,7 @@ class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
 
     val transactor = Transactor.fromDriverManager[IO](
       "org.postgresql.Driver",
-      s"jdbc:postgresql://localhost/fiuba",
+      s"jdbc:postgresql://172.20.0.2/fiuba",
       "fiuba", "fiuba"
     )
 
