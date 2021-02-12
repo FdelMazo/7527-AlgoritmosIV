@@ -8,8 +8,7 @@ final case object Utils {
     val listOfStrings: List[List[Char]] = str.foldRight[List[List[Char]]](seed)((e, acc) => {
       if (e == ',') {
         Nil :: acc
-      }
-      else {
+      } else {
         (e :: acc.head) :: acc.tail
       }
     })

@@ -1,11 +1,11 @@
 package fiuba.fp.validators
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
-final case class ValidationException(private val message: String = "",
-                                 private val cause: Throwable = None.orNull)
+final case class ValidationException(
+  private val message: String = "",
+  private val cause: Throwable = None.orNull)
   extends Exception(message, cause)
-
 
 sealed trait DataValidator
 case object DateValidator extends DataValidator
@@ -23,6 +23,6 @@ object DataValidator {
     }
     case DoubleValidator => Try(data.toDouble)
     case IntValidator => Try(data.toInt)
-    case MaxLengthValidator(maxLength) => if (data.size <= maxLength)  Success(data) else Failure(ValidationException("maxLength failed"))
+    case MaxLengthValidator(maxLength) => if (data.size <= maxLength) Success(data) else Failure(ValidationException("maxLength failed"))
   }
 }

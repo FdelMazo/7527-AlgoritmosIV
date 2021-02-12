@@ -1,8 +1,8 @@
 package fiuba.fp.http
 
-import cats.effect.{ContextShift, Timer, ConcurrentEffect}
-import cats.effect.IO.{contextShift, ContextSwitch}
-import fiuba.fp.services.{HealthCheckImpl, ScoreServiceImpl}
+import cats.effect.{ ContextShift, Timer, ConcurrentEffect }
+import cats.effect.IO.{ contextShift, ContextSwitch }
+import fiuba.fp.services.{ HealthCheckImpl, ScoreServiceImpl }
 import fs2.Stream
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder

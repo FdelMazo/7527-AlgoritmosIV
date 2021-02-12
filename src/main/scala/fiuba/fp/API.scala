@@ -1,9 +1,7 @@
 package fiuba.fp
 
-
-import cats.effect.{ExitCode, IO, IOApp}
+import cats.effect.{ ExitCode, IO, IOApp }
 import fiuba.fp.http.Fpfiuba43Server
-
 
 object API extends IOApp {
 
