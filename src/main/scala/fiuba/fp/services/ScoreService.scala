@@ -26,6 +26,11 @@ class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
       val dataMap : Map[String, Any] = (data.productElementNames zip data.productIterator)
         .filter(_._2 != None)
         .toMap
+        .transform(
+          (k,v) => v match {
+            case x: Option[_] => x.get
+            case _ => v
+          })
 
       val input_fields: List[InputField] = evaluator.getInputFields.asScala.toList
       val input_fields_namevals: List[String] = input_fields.map(_.getName).map(_.getValue)
@@ -63,7 +68,7 @@ class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
 
     val transactor = Transactor.fromDriverManager[IO](
       "org.postgresql.Driver",
-      s"jdbc:postgresql://172.20.0.2/fiuba",
+      s"jdbc:postgresql://localhost/fiuba",
       "fiuba", "fiuba"
     )
 
