@@ -23,7 +23,6 @@ final case class InputRow(id: Int,
                     wDiff: Double) {
 
   def hash() = this.hashCode()
-  def score() = 95
 }
 
 object InputRow {
