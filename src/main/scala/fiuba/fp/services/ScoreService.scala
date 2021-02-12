@@ -25,7 +25,7 @@ trait ScoreService[F[_]] {
 
 class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) extends ScoreService[F] {
     def PMMLevaluate(data: InputRow): Double = {
-      val evaluator = new LoadingModelEvaluatorBuilder().load(new File("model.pmml")).build();
+      val evaluator = new LoadingModelEvaluatorBuilder().load(new File("cosoide.pmml")).build();
 
       evaluator.verify();
 
