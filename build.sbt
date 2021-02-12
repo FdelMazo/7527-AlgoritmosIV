@@ -2,15 +2,30 @@ name := "fptp"
 
 version := "0.0.1"
 
-scalaVersion := "2.12.12"
+scalaVersion := "2.13.3"
+
+val Http4sVersion = "0.21.11"
+val CirceVersion = "0.13.0"
+val Specs2Version = "4.10.5"
+val LogbackVersion = "1.2.3"
+val pmmlVersion = "1.5.5"
+val doobieVersion = "0.9.4"
+val postgresVersion = "42.2.18"
+val xmlVersion = "2.3.2"
+val ScalaTestVersion = "3.2.0"
 
 libraryDependencies ++= Seq(
-  "org.postgresql" %  "postgresql"    % "42.2.18",
-  "org.jpmml"        %  "jpmml-sparkml" % "1.6.1",
-  "org.tpolecat"   %% "doobie-core"   % "0.9.0",
-  "org.tpolecat"   %% "doobie-hikari" % "0.9.0",
-  "co.fs2"         %% "fs2-io"        % "2.3.0",
-  "org.apache.spark" %% "spark-mllib"   % "3.0.1",
-  "org.scalatest"  %% "scalatest"     % "3.2.0" % Test
+  "org.jpmml"          %  "pmml-evaluator"       % pmmlVersion,
+  "org.postgresql"     %  "postgresql"           % postgresVersion,
+  "ch.qos.logback"     %  "logback-classic"      % LogbackVersion,
+  "jakarta.xml.bind"   %  "jakarta.xml.bind-api" % xmlVersion,
+  "org.glassfish.jaxb" %  "jaxb-runtime"         % xmlVersion,
+  "org.http4s"         %% "http4s-blaze-server"  % Http4sVersion,
+  "org.http4s"         %% "http4s-blaze-client"  % Http4sVersion,
+  "org.http4s"         %% "http4s-circe"         % Http4sVersion,
+  "org.http4s"         %% "http4s-dsl"           % Http4sVersion,
+  "org.tpolecat"       %% "doobie-hikari"        % doobieVersion,
+  "io.circe"           %% "circe-generic"        % CirceVersion,
+  "org.specs2"         %% "specs2-core"          % Specs2Version,
+  "org.scalatest"      %% "scalatest"            % ScalaTestVersion % Test
 )
-
