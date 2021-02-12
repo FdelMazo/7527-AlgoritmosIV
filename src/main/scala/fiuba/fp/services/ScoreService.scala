@@ -24,7 +24,7 @@ trait ScoreService[F[_]] {
 }
 
 class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) extends ScoreService[F] {
-    def PMMLevaluate(data: InputRow): String = {
+    def PMMLevaluate(data: InputRow): Double = {
       val evaluator = new LoadingModelEvaluatorBuilder().load(new File("cosoide.pmml")).build();
 
       evaluator.verify();
@@ -57,7 +57,9 @@ class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) exte
       
       val resultRecord = EvaluatorUtil.decodeAll(results)
 
-      return s"""
+      return 0.7
+
+      /*return s"""
       input_fields_mapping: ${input_fields_mapping.toString}
       data map: ${dataMap.toString}
       arguments: ${arguments.toString},
@@ -66,7 +68,7 @@ class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) exte
       input fields: ${evaluator.getInputFields.toString},
       result record: ${resultRecord.toString},
       results: ${results.toString}"""
-
+*/
     }
 
   override def score(data: InputRow): F[ScoreMessage] = {
@@ -90,7 +92,7 @@ class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) exte
           scoreRow <- sql"""select * from fptp.scores where hash_code = ${data.hash}""".query[Score].option.transact(xa)
           score <- scoreRow match {
             case Some(x) => x.score.get.pure[F]
-            case _ => sql"""insert into fptp.scores values (${data.hash}, ${data.score})""".update.run.transact(xa).map(_ => data.score)
+            case _ => sql"""insert into fptp.scores values (${data.hash}, ${PMMLevaluate(data)})""".update.run.transact(xa).map(_ => PMMLevaluate(data))
           }
       } yield ScoreMessage(score.toString())
     }
