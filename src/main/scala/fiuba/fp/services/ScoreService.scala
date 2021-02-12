@@ -25,7 +25,7 @@ trait ScoreService[F[_]] {
 
 class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) extends ScoreService[F] {
     def PMMLevaluate(data: InputRow): Double = {
-      val evaluator = new LoadingModelEvaluatorBuilder().load(new File("cosoide.pmml")).build();
+      val evaluator = new LoadingModelEvaluatorBuilder().load(new File("model.pmml")).build();
 
       evaluator.verify();
 
@@ -55,20 +55,7 @@ class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) exte
 
       val results = evaluator.evaluate(arguments.asJava)
       
-      val resultRecord = EvaluatorUtil.decodeAll(results)
-
-      return 0.7
-
-      /*return s"""
-      input_fields_mapping: ${input_fields_mapping.toString}
-      data map: ${dataMap.toString}
-      arguments: ${arguments.toString},
-      output fields: ${evaluator.getOutputFields.toString},
-      target fields: ${evaluator.getTargetFields.toString},
-      input fields: ${evaluator.getInputFields.toString},
-      result record: ${resultRecord.toString},
-      results: ${results.toString}"""
-*/
+      EvaluatorUtil.decodeAll(results).get("prediction").asInstanceOf[Double]
     }
 
   override def score(data: InputRow): F[ScoreMessage] = {
@@ -86,6 +73,8 @@ class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) exte
           be                                      // execute JDBC operations here
         )
       } yield xa
+
+    PMMLevaluate(data)
 
     transactor.use { xa =>
       for {
