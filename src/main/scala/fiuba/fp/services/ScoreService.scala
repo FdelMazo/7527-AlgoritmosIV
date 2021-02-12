@@ -31,11 +31,10 @@ class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) exte
 
     transactor.use { xa =>
       for {
-
           scoreRow <- sql"""select * from Score where hash_code = ${data.hash}""".query[Score].option.transact(xa)
           score <- scoreRow match {
-            case Some(h) => h.score.pure[F]
-//            case _ => Pedirselo al PMML y Guardarlo
+            case Some(x) => x.score.get.pure[F]
+            case _ => sql"""insert into Score values (${data.hash}, ${data.score})""".update.run.transact(xa).map(_ => data.score)
           }
       } yield ScoreMessage(score.toString())
     }
