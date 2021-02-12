@@ -1,48 +1,54 @@
 package fiuba.fp.services
 
-import doobie.implicits._
-import cats.Applicative
-import cats.effect.IO
+import cats.effect._
 import cats.implicits._
-import doobie.util.transactor.Transactor
-import fiuba.fp.Main.{transaction, s1, assembler, args}
-import fiuba.fp.models.{DataSetRow, Score, ScoreMessage, InputRow}
+import doobie.ExecutionContexts
+import doobie.hikari._
+import doobie.implicits._
+import fiuba.fp.models.{Score, ScoreMessage, InputRow}
 
-import scala.concurrent.ExecutionContext
 
 trait ScoreService[F[_]] {
   def score(data: InputRow): F[ScoreMessage]
 }
 
-class ScoreServiceImpl[F[_]: Applicative]() extends ScoreService[F] {
+class ScoreServiceImpl[F[_]: Async](implicit contextShift: ContextShift[F]) extends ScoreService[F] {
   override def score(data: InputRow): F[ScoreMessage] = {
-    implicit val cs = IO.contextShift(ExecutionContext.global)
 
-    val transactor = Transactor.fromDriverManager[IO](
-      "org.postgresql.Driver",
-      s"jdbc:postgresql://localhost/fiuba",
-      "fiuba", "fiuba")
+    val transactor: Resource[F, HikariTransactor[F]] =
+      for {
+        ce <- ExecutionContexts.fixedThreadPool[F](32) // our connect EC
+        be <- Blocker[F]    // our blocking EC
+        xa <- HikariTransactor.newHikariTransactor[F](
+          "org.postgresql.Driver",                        // driver classname
+          "jdbc:postgresql://localhost/fiuba",   // connect URL
+          "fiuba",                                   // username
+          "fiuba",                                     // password
+          ce,                                     // await connection here
+          be                                      // execute JDBC operations here
+        )
+      } yield xa
 
-    val datasetrow = DataSetRow.selectById(data.id)
-      .compile
-      .toList
-      .transact(transactor)
-      .unsafeRunSync
-      .head
+    transactor.use { xa =>
+      for {
 
-    val scorerow = Score.selectByHash(datasetrow.hash)
-      .compile
-      .toList
-      .transact(transactor)
-      .unsafeRunSync
-      .head
-
-    val score = scorerow.score match {
-      case Some(h) => h
-      case _ => "computame, forro"
+          scoreRow <- sql"""select * from Score where hash_code = ${data.hash}""".query[Score].option.transact(xa)
+          score <- scoreRow match {
+            case Some(h) => h.score.pure[F]
+//            case _ => Pedirselo al PMML y Guardarlo
+          }
+      } yield ScoreMessage(score.toString())
     }
-
-    ScoreMessage(score.toString).pure[F]
   }
-
 }
+
+
+
+
+
+
+
+
+
+
+
