@@ -1,3 +1,9 @@
+name := "fptp"
+
+version := "0.0.1"
+
+scalaVersion := "2.13.3"
+
 val Http4sVersion = "0.21.11"
 val CirceVersion = "0.13.0"
 val Specs2Version = "4.10.5"
@@ -6,14 +12,7 @@ val pmmlVersion = "1.5.5"
 val doobieVersion = "0.9.4"
 val postgresVersion = "42.2.18"
 val xmlVersion = "2.3.2"
-
-organization := "edu.fiuba"
-
-name := "fp-fiuba-4-3"
-
-version := "0.0.1-SNAPSHOT"
-
-scalaVersion := "2.13.3"
+val ScalaTestVersion = "3.2.0"
 
 libraryDependencies ++= Seq(
   "org.jpmml"          %  "pmml-evaluator"       % pmmlVersion,
@@ -27,5 +26,6 @@ libraryDependencies ++= Seq(
   "org.http4s"         %% "http4s-dsl"           % Http4sVersion,
   "org.tpolecat"       %% "doobie-hikari"        % doobieVersion,
   "io.circe"           %% "circe-generic"        % CirceVersion,
-  "org.specs2"         %% "specs2-core"          % Specs2Version % Test
+  "org.specs2"         %% "specs2-core"          % Specs2Version,
+  "org.scalatest"      %% "scalatest"            % ScalaTestVersion % Test
 )
