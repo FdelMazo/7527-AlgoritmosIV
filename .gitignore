@@ -13,3 +13,6 @@ project/metals.sbt
 .bsp/
 **.sw{o,p}
 **.pmml
+*.log
+*.out
+*.aux
