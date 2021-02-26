@@ -1,35 +1,26 @@
-\documentclass[a4paper]{article}
-
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{mathabx}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage{booktabs}
 \usepackage{hyperref}
-\usepackage{listings}
-\usepackage{xcolor}
+\graphicspath{ {./images/} }
 
-\definecolor{dkgreen}{rgb}{0,0.6,0}
-\definecolor{gray}{rgb}{0.5,0.5,0.5}
-\definecolor{mauve}{rgb}{0.58,0,0.82}
-\renewcommand{\abstractname}{}
 \title{Trabajo Práctico - Cuarta Parte \\ \large{[75.27] Algoritmos y Programación IV}}
-\author{del Mazo, Federico - 100029 \\ Lafroce, Matías - 91378 \\ Mermet, Javier - 98153 }
-\date{26 de Febrero del 2021}
-
-\lstdefinestyle{scala}{
-  frame=tb,
-  language=scala,
-  aboveskip=3mm,
-  belowskip=3mm,
-  showstringspaces=false,
-  columns=flexible,
-  basicstyle={\small\ttfamily},
-  numbers=none,
-  numberstyle=\tiny\color{gray},
-  keywordstyle=\color{blue},
-  commentstyle=\color{dkgreen},
-  stringstyle=\color{mauve},
-  frame=single,
-  breaklines=true,
-  breakatwhitespace=true,
-  tabsize=3,
+\author{
+	del Mazo, Federico\\
+	\texttt{100029}
+	\and
+	Lafroce, Matías\\
+	\texttt{91378}\\
+	\and
+	Mermet, Javier\\
+	\texttt{98153}
 }
+
+\date{26 de Febrero del 2021}
 
 \begin{document}
 
@@ -38,10 +29,16 @@
 \abstract{En este trabajo revisamos los trabajos prácticos de Cecilia Hortas y Martín Coll que se pueden encontrar en \url{https://github.com/chortas/7527-AlgoritmosIV}}
 
 \section{Primera parte}
-
 En la primera parte del TP vemos varias cosas positivas para analizar del programa. Por empezar nos gustó como se valida el DataSetRow utilizando for comprehension para validar cada uno de sus atributos, y cómo cada uno de estos validadores están implementados (y reutilizados).
 
-\begin{lstlisting}[style=scala]
+\begin{minted}[
+	mathescape,
+        linenos,
+        numbersep=5pt,
+        gobble=0,
+        frame=lines,
+	framesep=2mm,
+]{scala}
 val converter: Stream[IO, Either[Throwable, Int]] = for {
   blocker <- Stream.resource(Blocker[IO])
   results <- io.file
@@ -58,23 +55,46 @@ val converter: Stream[IO, Either[Throwable, Int]] = for {
       case Left(error)  => IO.pure[Either[Throwable, Int]](Left(error))
     }
 } yield results
-\end{lstlisting}
+\end{minted}
 
-También esta muy bien pensado la manera en la que se lidia con los errores utilizando IO.pure, para levantar el Either con una monada y así mantener su valor.
+También esta muy bien pensada la manera en la que se lidia con los errores utilizando \texttt{IO.pure}, para levantar el \texttt{Either} con una mónada y así mantener su valor.
 
-Una cosa que se podría mejorar en esta parte del trabajo es el encapsulamiento; se ven distintas capas de abstracción en el Run.scala, y ahí mismo se tiene el converter, que podría haber sido parte de su propia clase.
-
-// Javi va a escribir algo del 4096 magico del read all
+Una cosa que se podría mejorar en esta parte del trabajo es el encapsulamiento; se ven distintas capas de abstracción en el \texttt{Run.scala}, y ahí mismo se tiene el converter, que podría haber sido parte de su propia clase. De este modo se separarían responsabilidades.
 
 \section{Segunda parte}
+En esta entrega del TP vemos mucha lógica dentro del \texttt{Run}, al igual que en el primer TP. Tanto el manejo de la DB como de PMML podrían haber sido separados en sus propios módulos. Cada uno de estos podría ser un servicio que sea luego llamado en el Run.
 
-Denuevo hay mucha logica en el Run (manejos de db y pmml ahi nomas) -> tendria que ir a servicios
+Algo que llama la atención es la implementación de Split. Un punto a destacar como positivo es que se utiliza una State Monad para encapsular \texttt{shuffle}. Pero por otro lado, hasta el mejor de nuestro entendimiento, no serviría en un stream considerando el siguiente snippet:
 
-// Es lazy? split.scala
+\begin{minted}[
+	mathescape,
+        linenos,
+        numbersep=5pt,
+        gobble=0,
+        frame=lines,
+	framesep=2mm,
+	]{scala}
+  def split[T](list: List[T]): State[Seed, DataSet[T]] =
+    shuffle(list).map { l =>
+      val (l1, l2) = l.splitAt((list.length * 0.7).round.toInt)
+      DataSet(l1, l2)
+    }
+\end{minted}
 
-// genial el uso de reflection para construir el dataframe
+Vemos que llama a \texttt{splitAt}, el cual requiere conocer el largo total de la lista.
 
-\begin{lstlisting}[style=scala]
+Nos queda la duda si no seria mas conveniente evitar el uso de \texttt{ScalaReflection} para el armado del \texttt{DataFrame}.
+
+En el siguiente snippet podemos ver a lo que nos referíamos al principio de la sección:
+
+\begin{minted}[
+	mathescape,
+        linenos,
+        numbersep=5pt,
+        gobble=0,
+        frame=lines,
+	framesep=2mm,
+	]{scala}
   val pipeline = new Pipeline().setStages(stages)
   Try(pipeline.fit(dataSetTrain))
     .fold(_ => println("The model creation failed"), p => {
@@ -84,15 +104,23 @@ Denuevo hay mucha logica en el Run (manejos de db y pmml ahi nomas) -> tendria q
       val os: OutputStream = new FileOutputStream("model.pmml");
       MetroJAXBUtil.marshalPMML(pmml, os);
     })
-\end{lstlisting}
+\end{minted}
+
+Tanto el entrenamiento, como inferencia sobre el set de testing, com el armado y dumpeado del PMML están altamente acoplados.
 
 \section{Tercera parte}
+En esta ultima entrega no notamos el problema de la entrega anterior, y la cantidad de código en main es noblemente menor.
 
-Por fin no hay mucha logica en main
+Sobre el siguiente snippet, consideramos que hay soluciones mas idiomáticas/paradigmáticas para \textsl{if -> return 0}
 
-Hay soluciones mas idiomaticas/paradigmaticasahre para if ->return 0
-
-\begin{lstlisting}[style=scala]
+\begin{minted}[
+	mathescape,
+        linenos,
+        numbersep=5pt,
+        gobble=0,
+        frame=lines,
+	framesep=2mm,
+	firstnumber=45]{scala}
 def valueFromFieldName(name: String): Any = {
   val elementName = productElementNames.toList.find(_.toLowerCase == name.toLowerCase).get
   if (elementName == "date") {
@@ -105,11 +133,16 @@ def valueFromFieldName(name: String): Any = {
   }
   value
 }
-\end{lstlisting}
+\end{minted}
 
+Los tests son muy completos: utilizan mocks de distinta índole para realizarlos.
 
-Usan F en transactor
+Resulta interesante ver que el \texttt{transactor} esta encapsulado en \texttt{F}, de este modo esta desligado de su tiempo de ejecución hasta que se le indica el interprete. De este modo es consistente con el uso de \texttt{F} en el resto del TP.
 
-Genial los mocks en tests
+\section{Notas generales}
+Notamos que en los 3 TPs, pocos \texttt{val} están tipados. Se soporta mucho en la inferencia de tipos.
+
+\section{Nota final}
+Le otorgamos a este grupo una nota de 4.5/5 Kleislies. Muy bueno, muy bueno.
 
 \end{document}
