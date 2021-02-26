@@ -59,7 +59,7 @@ val converter: Stream[IO, Either[Throwable, Int]] = for {
 
 También esta muy bien pensada la manera en la que se lidia con los errores utilizando \texttt{IO.pure}, para levantar el \texttt{Either} con una mónada y así mantener su valor.
 
-Una cosa que se podría mejorar en esta parte del trabajo es el encapsulamiento; se ven distintas capas de abstracción en el \texttt{Run.scala}, y ahí mismo se tiene el converter, que podría haber sido parte de su propia clase. De este modo se separarían responsabilidades.
+Una cosa que se podría mejorar en esta parte del trabajo es el encapsulamiento; se ven distintas capas de abstracción en \texttt{Run.scala}, y ahí mismo se tiene el converter, que podría haber sido parte de su propia clase. De este modo se separarían responsabilidades.
 
 \section{Segunda parte}
 En esta entrega del TP vemos mucha lógica dentro del \texttt{Run}, al igual que en el primer TP. Tanto el manejo de la DB como de PMML podrían haber sido separados en sus propios módulos. Cada uno de estos podría ser un servicio que sea luego llamado en el Run.
