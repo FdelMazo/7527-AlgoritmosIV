@@ -1,29 +1,115 @@
 \documentclass[a4paper]{article}
-\input{scalamacros.tex}
-\input{ExtraSettings.tex}
 
 \usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
 \renewcommand{\abstractname}{}
 \title{Trabajo Práctico - Cuarta Parte \\ \large{[75.27] Algoritmos y Programación IV}}
-\author{del Mazo, Federico - 100029 \\ Lafroce, Matías - xxx \\ Mermet, Javier - xxx }
+\author{del Mazo, Federico - 100029 \\ Lafroce, Matías - 91378 \\ Mermet, Javier - 98153 }
 \date{26 de Febrero del 2021}
+
+\lstdefinestyle{scala}{
+  frame=tb,
+  language=scala,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3,
+}
 
 \begin{document}
 
 \maketitle
 
-\abstract{En este trabajo revisamos los trabajos prácticos de xxx que se pueden encontrar en \url{https://github.com/chortas/7527-AlgoritmosIV}}
+\abstract{En este trabajo revisamos los trabajos prácticos de Cecilia Hortas y Martín Coll que se pueden encontrar en \url{https://github.com/chortas/7527-AlgoritmosIV}}
 
 \section{Primera parte}
 
-lorem
+En la primera parte del TP vemos varias cosas positivas para analizar del programa. Por empezar nos gustó como se valida el DataSetRow utilizando for comprehension para validar cada uno de sus atributos, y cómo cada uno de estos validadores están implementados (y reutilizados).
+
+\begin{lstlisting}[style=scala]
+val converter: Stream[IO, Either[Throwable, Int]] = for {
+  blocker <- Stream.resource(Blocker[IO])
+  results <- io.file
+    .readAll[IO](Paths.get("train.csv"), blocker, 4096)
+    .through(text.utf8Decode)
+    .through(text.lines)
+    .drop(1) // remove header
+    .dropLastIf(_.isEmpty)
+    .map(
+      DataSetRow.toDataSetRowEither(_).map(QueryConstructor.constructInsert)
+    )
+    .evalMap { // collect errors from both parsing and transacting
+      case Right(query) => query.run.transact(transactor).attempt
+      case Left(error)  => IO.pure[Either[Throwable, Int]](Left(error))
+    }
+} yield results
+\end{lstlisting}
+
+También esta muy bien pensado la manera en la que se lidia con los errores utilizando IO.pure, para levantar el Either con una monada y así mantener su valor.
+
+Una cosa que se podría mejorar en esta parte del trabajo es el encapsulamiento; se ven distintas capas de abstracción en el Run.scala, y ahí mismo se tiene el converter, que podría haber sido parte de su propia clase.
+
+// Javi va a escribir algo del 4096 magico del read all
 
 \section{Segunda parte}
 
-ipsum
+Denuevo hay mucha logica en el Run (manejos de db y pmml ahi nomas) -> tendria que ir a servicios
+
+// Es lazy? split.scala
+
+// genial el uso de reflection para construir el dataframe
+
+\begin{lstlisting}[style=scala]
+  val pipeline = new Pipeline().setStages(stages)
+  Try(pipeline.fit(dataSetTrain))
+    .fold(_ => println("The model creation failed"), p => {
+      val pipelinePredictionDf = p.transform(dataSetTest)
+      pipelinePredictionDf.show(10)
+      val pmml = new PMMLBuilder(schema, p).build
+      val os: OutputStream = new FileOutputStream("model.pmml");
+      MetroJAXBUtil.marshalPMML(pmml, os);
+    })
+\end{lstlisting}
 
 \section{Tercera parte}
 
-la tercera palabra de lorem ipsum que nunca me la acuerdo
+Por fin no hay mucha logica en main
+
+Hay soluciones mas idiomaticas/paradigmaticasahre para if ->return 0
+
+\begin{lstlisting}[style=scala]
+def valueFromFieldName(name: String): Any = {
+  val elementName = productElementNames.toList.find(_.toLowerCase == name.toLowerCase).get
+  if (elementName == "date") {
+    return date.toEpochSecond(ZoneOffset.UTC)
+  }
+  val index = productElementNames.indexOf(elementName)
+  val value = productElement(index)
+  if (value == None || value == null) {
+    return 0
+  }
+  value
+}
+\end{lstlisting}
+
+
+Usan F en transactor
+
+Genial los mocks en tests
 
 \end{document}
