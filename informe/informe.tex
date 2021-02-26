@@ -6,7 +6,8 @@
 \usepackage{minted}
 \usepackage{booktabs}
 \usepackage{hyperref}
-\graphicspath{ {./images/} }
+
+\renewcommand{\abstractname}{}
 
 \title{Trabajo Práctico - Cuarta Parte \\ \large{[75.27] Algoritmos y Programación IV}}
 \author{
@@ -59,10 +60,10 @@ val converter: Stream[IO, Either[Throwable, Int]] = for {
 
 También esta muy bien pensada la manera en la que se lidia con los errores utilizando \texttt{IO.pure}, para levantar el \texttt{Either} con una mónada y así mantener su valor.
 
-Una cosa que se podría mejorar en esta parte del trabajo es el encapsulamiento; se ven distintas capas de abstracción en \texttt{Run.scala}, y ahí mismo se tiene el converter, que podría haber sido parte de su propia clase. De este modo se separarían responsabilidades.
+Una cosa que se podría mejorar en esta parte del trabajo es el encapsulamiento; se ven distintas capas de abstracción en \texttt{Run.scala}, y ahí mismo se tiene el \texttt{converter}, que podría haber sido parte de su propia clase. De este modo se separarían responsabilidades.
 
 \section{Segunda parte}
-En esta entrega del TP vemos mucha lógica dentro del \texttt{Run}, al igual que en el primer TP. Tanto el manejo de la DB como de PMML podrían haber sido separados en sus propios módulos. Cada uno de estos podría ser un servicio que sea luego llamado en el Run.
+En esta entrega del TP vemos mucha lógica dentro de \texttt{Run}, al igual que en el primer TP. Tanto el manejo de la DB como de PMML podrían haber sido separados en sus propios módulos. Cada uno de estos podría ser un servicio que sea luego llamado en \texttt{Run}.
 
 Algo que llama la atención es la implementación de Split. Un punto a destacar como positivo es que se utiliza una State Monad para encapsular \texttt{shuffle}. Pero por otro lado, hasta el mejor de nuestro entendimiento, no serviría en un stream considerando el siguiente snippet:
 
@@ -81,9 +82,9 @@ Algo que llama la atención es la implementación de Split. Un punto a destacar 
     }
 \end{minted}
 
-Vemos que llama a \texttt{splitAt}, el cual requiere conocer el largo total de la lista.
+Vemos que llama a \texttt{splitAt}, el cual requiere conocer el largo total de la lista. Considerando esto, su ejecución no podría ser lazy, y requiere tener cargado todo el dataset en memoria.
 
-Nos queda la duda si no seria mas conveniente evitar el uso de \texttt{ScalaReflection} para el armado del \texttt{DataFrame}.
+Nos queda la duda si no sería mas conveniente evitar el uso de \texttt{ScalaReflection} para el armado del \texttt{DataFrame}. Al usar reflexión se pierde abstracción y la capacidad de manejar distintos errores que pudieran surgir, con abstracciones del paradigma. Al trabajar con reflexión se trabaja sobre instancias particulares, de modo que se pierde la capacidad de trabajar con traits.
 
 En el siguiente snippet podemos ver a lo que nos referíamos al principio de la sección:
 
@@ -111,7 +112,7 @@ Tanto el entrenamiento, como inferencia sobre el set de testing, com el armado y
 \section{Tercera parte}
 En esta ultima entrega no notamos el problema de la entrega anterior, y la cantidad de código en main es noblemente menor.
 
-Sobre el siguiente snippet, consideramos que hay soluciones mas idiomáticas/paradigmáticas para \textsl{if -> return 0}
+Sobre el siguiente snippet, consideramos que hay soluciones mas idiomáticas/paradigmáticas para \texttt{if -> return 0}.
 
 \begin{minted}[
 	mathescape,
@@ -141,8 +142,5 @@ Resulta interesante ver que el \texttt{transactor} esta encapsulado en \texttt{F
 
 \section{Notas generales}
 Notamos que en los 3 TPs, pocos \texttt{val} están tipados. Se soporta mucho en la inferencia de tipos.
-
-\section{Nota final}
-Le otorgamos a este grupo una nota de 4.5/5 Kleislies. Muy bueno, muy bueno.
 
 \end{document}
